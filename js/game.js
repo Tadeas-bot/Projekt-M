@@ -8,10 +8,12 @@
   const QE = window.QuestionEngine;
   const MB = window.MazeBuilder;
   const TILE = D.TILE;
-  const COLS = D.COLS;
-  const ROWS = D.ROWS;
-  const W = COLS * TILE;
-  const H = ROWS * TILE;
+  const CHUNK = MB.CHUNK;
+  const CHUNK_PX = CHUNK * TILE;
+  const VIEW_COLS = D.VIEW_COLS;
+  const VIEW_ROWS = D.VIEW_ROWS;
+  const W = VIEW_COLS * TILE;
+  const H = VIEW_ROWS * TILE;
   const TAU = Math.PI * 2;
 
   const $ = (id) => document.getElementById(id);
@@ -271,7 +273,7 @@
     const level = selectedLevel();
     ui.selectedSummary.innerHTML =
       `Vybráno: <b>${level.grade}</b><span class="sep">•</span>` +
-      `${level.chests} truhel<span class="sep">•</span>${level.enemies} nepřátel<span class="sep">•</span>` +
+      `2 pokusy na truhlu<span class="sep">•</span>${level.enemies} nepřátel<span class="sep">•</span>` +
       `${level.mathTime} s na příklad`;
     ui.startBtn.innerHTML = `Spustit hru <span>→</span>`;
     ui.startBtn.setAttribute("aria-label", `Spustit hru za ${level.grade}`);
@@ -381,64 +383,69 @@
   }
 
   /* ============================================================
-     STATICKÉ VYKRESLENÍ BLUDIŠTĚ
+     VYKRESLENÍ JEDNÉ ČÁSTI NEKONEČNÉ MAPY
      ============================================================ */
-  function buildMazeCanvas(maze, dpr) {
+  function buildChunkCanvas(maze, chunk, dpr) {
+    const size = CHUNK_PX;
     const cnv = document.createElement("canvas");
-    cnv.width = Math.round(W * dpr);
-    cnv.height = Math.round(H * dpr);
+    cnv.width = Math.round(size * dpr);
+    cnv.height = Math.round(size * dpr);
     const c = cnv.getContext("2d");
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const bg = c.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, "#081120");
-    bg.addColorStop(0.55, "#060d19");
-    bg.addColorStop(1, "#050a14");
-    c.fillStyle = bg;
-    c.fillRect(0, 0, W, H);
+    const baseX = chunk.cx * CHUNK;
+    const baseY = chunk.cy * CHUNK;
+
+    c.fillStyle = "#050a14";
+    c.fillRect(0, 0, size, size);
 
     // podlaha
-    for (let y = 0; y < ROWS; y++) {
-      for (let x = 0; x < COLS; x++) {
-        if (maze.isWall(x, y)) continue;
-        const h = hash2(x, y);
-        c.fillStyle = (x + y) % 2 === 0 ? "rgba(11,22,39,.55)" : "rgba(8,17,31,.55)";
-        c.fillRect(x * TILE, y * TILE, TILE, TILE);
+    for (let y = 0; y < CHUNK; y++) {
+      for (let x = 0; x < CHUNK; x++) {
+        if (chunk.grid[y * CHUNK + x] === 1) continue;
+        const wx = baseX + x, wy = baseY + y;
+        const px = x * TILE, py = y * TILE;
+        const h = hash2(wx, wy);
+        c.fillStyle = (wx + wy) % 2 === 0 ? "rgba(11,22,39,.55)" : "rgba(8,17,31,.55)";
+        c.fillRect(px, py, TILE, TILE);
         c.strokeStyle = "rgba(84,130,190,.035)";
         c.lineWidth = 1;
-        c.strokeRect(x * TILE + 0.5, y * TILE + 0.5, TILE - 1, TILE - 1);
+        c.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
         if (h > 0.86) {
           c.fillStyle = "rgba(120,170,240,.13)";
           c.beginPath();
-          c.arc(x * TILE + TILE / 2, y * TILE + TILE / 2, 1, 0, TAU);
+          c.arc(px + TILE / 2, py + TILE / 2, 1, 0, TAU);
           c.fill();
         }
       }
     }
 
-    // startovní místnost – jemný kruh
-    const sx = (maze.spawn.x + 0.5) * TILE;
-    const sy = (maze.spawn.y + 0.5) * TILE;
-    const startGlow = c.createRadialGradient(sx, sy, 2, sx, sy, TILE * 1.55);
-    startGlow.addColorStop(0, "rgba(56,232,255,.09)");
-    startGlow.addColorStop(1, "rgba(56,232,255,0)");
-    c.fillStyle = startGlow;
-    c.fillRect(sx - TILE * 2, sy - TILE * 2, TILE * 4, TILE * 4);
-    c.strokeStyle = "rgba(56,232,255,.14)";
-    c.lineWidth = 1;
-    c.beginPath();
-    c.arc(sx, sy, TILE * 0.95, 0, TAU);
-    c.stroke();
+    // jemný kruh ve startovní místnosti
+    if (chunk.cx === 0 && chunk.cy === 0) {
+      const sx = (maze.spawn.x + 0.5) * TILE;
+      const sy = (maze.spawn.y + 0.5) * TILE;
+      const startGlow = c.createRadialGradient(sx, sy, 2, sx, sy, TILE * 1.55);
+      startGlow.addColorStop(0, "rgba(56,232,255,.09)");
+      startGlow.addColorStop(1, "rgba(56,232,255,0)");
+      c.fillStyle = startGlow;
+      c.fillRect(sx - TILE * 2, sy - TILE * 2, TILE * 4, TILE * 4);
+      c.strokeStyle = "rgba(56,232,255,.14)";
+      c.lineWidth = 1;
+      c.beginPath();
+      c.arc(sx, sy, TILE * 0.95, 0, TAU);
+      c.stroke();
+    }
 
     // zdi
-    const wallGrad = c.createLinearGradient(0, 0, 0, H);
+    const wallGrad = c.createLinearGradient(0, 0, 0, size);
     wallGrad.addColorStop(0, "#142b48");
     wallGrad.addColorStop(0.5, "#0e2038");
     wallGrad.addColorStop(1, "#0a1729");
     c.save();
-    for (let y = 0; y < ROWS; y++) {
-      for (let x = 0; x < COLS; x++) {
-        if (!maze.isWall(x, y)) continue;
+    for (let y = 0; y < CHUNK; y++) {
+      for (let x = 0; x < CHUNK; x++) {
+        if (chunk.grid[y * CHUNK + x] === 0) continue;
+        const wx = baseX + x, wy = baseY + y;
         const px = x * TILE, py = y * TILE;
         c.save();
         c.shadowColor = "rgba(37,99,160,.22)";
@@ -453,9 +460,8 @@
         roundRect(c, px + 1.7, py + 1.7, TILE - 3.4, TILE - 3.4, 5);
         c.stroke();
 
-        // světlé hrany směrem do chodeb
-        const top = !maze.isWall(x, y - 1), bottom = !maze.isWall(x, y + 1);
-        const left = !maze.isWall(x - 1, y), right = !maze.isWall(x + 1, y);
+        const top = !maze.isWall(wx, wy - 1), bottom = !maze.isWall(wx, wy + 1);
+        const left = !maze.isWall(wx - 1, wy), right = !maze.isWall(wx + 1, wy);
         c.lineWidth = 1.7;
         c.shadowBlur = 5;
         if (top) {
@@ -483,10 +489,11 @@
     }
     c.restore();
 
-    // dekorace – krystaly a runy
+    // dekorace
     const runes = ["π", "√", "∑", "×", "÷", "∞", "Δ"];
-    for (const d of maze.decor) {
-      const px = (d.x + 0.5) * TILE, py = (d.y + 0.5) * TILE;
+    for (const d of chunk.decor) {
+      const px = (d.x - baseX + 0.5) * TILE;
+      const py = (d.y - baseY + 0.5) * TILE;
       if (d.type === "crystal") {
         const col = d.hue < 0.5 ? "#38e8ff" : "#a78bfa";
         c.save();
@@ -511,15 +518,15 @@
       }
     }
 
-    // jemná mřížka přes zdi pro texturu
+    // textura zdí
     c.save();
     c.globalAlpha = 0.12;
     c.strokeStyle = "#5b8bc4";
     c.lineWidth = 0.6;
-    for (let y = 0; y < ROWS; y++) {
-      for (let x = 0; x < COLS; x++) {
-        if (!maze.isWall(x, y)) continue;
-        if (hash2(x + 9, y + 3) > 0.65) {
+    for (let y = 0; y < CHUNK; y++) {
+      for (let x = 0; x < CHUNK; x++) {
+        if (chunk.grid[y * CHUNK + x] === 0) continue;
+        if (hash2(baseX + x + 9, baseY + y + 3) > 0.65) {
           c.beginPath();
           c.moveTo(x * TILE + 8, y * TILE + TILE - 8);
           c.lineTo(x * TILE + TILE - 8, y * TILE + 8);
@@ -529,13 +536,8 @@
     }
     c.restore();
 
-    // vinětace
-    const vig = c.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.9);
-    vig.addColorStop(0, "rgba(2,5,12,0)");
-    vig.addColorStop(1, "rgba(2,5,12,.55)");
-    c.fillStyle = vig;
-    c.fillRect(0, 0, W, H);
-
+    chunk.canvas = cnv;
+    chunk.canvasDpr = dpr;
     return cnv;
   }
 
@@ -549,7 +551,6 @@
       this.t = 0;
       this.level = null;
       this.maze = null;
-      this.mazeCanvas = null;
       this.player = null;
       this.weapon = null;
       this.chests = [];
@@ -566,6 +567,7 @@
       this.nearChest = null;
       this.score = 0;
       this.chestsOpened = 0;
+      this.chestsLost = 0;
       this.kills = 0;
       this.correct = 0;
       this.wrong = 0;
@@ -573,6 +575,15 @@
       this.elapsed = 0;
       this.shake = 0;
       this.hudCache = {};
+      this.camera = { x: 0, y: 0 };
+      this.hasKey = false;
+      this.keyDropped = false;
+      this.exitPath = [];
+      this.exitRepathTimer = 0;
+      this.seenChunks = new Set();
+      this.chestTiles = new Set();
+      this.worldTimer = 0;
+      this.pruneTimer = 0;
     }
 
     start(level) {
@@ -580,8 +591,8 @@
       const run = this.runId;
       this.level = level;
       this.state = "playing";
-      this.maze = MB.generate(COLS, ROWS, level.chests);
-      this.mazeCanvas = buildMazeCanvas(this.maze, DPR);
+      const seed = (Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0;
+      this.maze = MB.generate(seed);
 
       const spawnX = MB.toPx(this.maze.spawn.x);
       const spawnY = MB.toPx(this.maze.spawn.y);
@@ -595,6 +606,7 @@
       this.weapon = Object.assign({}, D.STARTING_WEAPON, { level: 1 });
       this.score = 0;
       this.chestsOpened = 0;
+      this.chestsLost = 0;
       this.kills = 0;
       this.correct = 0;
       this.wrong = 0;
@@ -611,16 +623,20 @@
       this.shockwaves = [];
       this.respawnQueue = [];
       this.hudCache = {};
+      this.camera = { x: spawnX, y: spawnY };
+      this.hasKey = false;
+      this.keyDropped = false;
+      this.exitPath = [];
+      this.exitRepathTimer = 0;
+      this.seenChunks = new Set();
+      this.chestTiles = new Set();
+      this.worldTimer = 0;
+      this.pruneTimer = 0;
 
-      this.chests = this.maze.chestSpots.map((tile, i) => ({
-        x: MB.toPx(tile.x), y: MB.toPx(tile.y),
-        opened: false, lockedUntil: 0, openAt: 0, phase: i * 1.7
-      }));
-      this.portal = {
-        x: MB.toPx(this.maze.exit.x),
-        y: MB.toPx(this.maze.exit.y),
-        active: false, pulse: 0
-      };
+      this.chests = [];
+      this.portal = null;
+      this.ensureWorld(true);
+      this.spawnGuaranteedChests(2);
 
       this.makeAmbient();
       for (let i = 0; i < level.enemies; i++) {
@@ -653,12 +669,28 @@
 
     makeAmbient() {
       this.ambient = [];
+      const p = this.player;
       for (let i = 0; i < 46; i++) {
         this.ambient.push({
-          x: rnd(0, W), y: rnd(0, H), r: rnd(0.5, 1.7),
+          x: p.x + rnd(-W / 2, W / 2),
+          y: p.y + rnd(-H / 2, H / 2),
+          r: rnd(0.5, 1.7),
           phase: rnd(0, TAU), speed: rnd(0.15, 0.5),
           color: Math.random() < 0.6 ? "#38e8ff" : "#a78bfa"
         });
+      }
+    }
+
+    updateAmbient(dt) {
+      const p = this.player;
+      const margin = 80;
+      for (const a of this.ambient) {
+        a.phase += dt * a.speed;
+        if (a.x < p.x - W / 2 - margin || a.x > p.x + W / 2 + margin ||
+            a.y < p.y - H / 2 - margin || a.y > p.y + H / 2 + margin) {
+          a.x = p.x + rnd(-W / 2, W / 2);
+          a.y = p.y + rnd(-H / 2, H / 2);
+        }
       }
     }
 
@@ -681,24 +713,32 @@
     }
 
     canStand(x, y, radius) {
-      if (x - radius < 2 || y - radius < 2 || x + radius > W - 2 || y + radius > H - 2) return false;
       return !this.circleHitsWall(x, y, radius);
     }
 
     pickEnemySpawn(minDistance) {
       const p = this.player;
-      let options = this.maze.enemySpawns.filter((t) => {
+      const pt = { x: Math.floor(p.x / TILE), y: Math.floor(p.y / TILE) };
+      let options = this.maze.floorsAround(pt.x, pt.y, 12).filter((t) => {
         const x = MB.toPx(t.x), y = MB.toPx(t.y);
         return dist2(x, y, p.x, p.y) > minDistance * minDistance;
       });
       if (!options.length) {
-        options = this.maze.enemySpawns.slice().sort((a, b) => {
-          const da = dist2(MB.toPx(a.x), MB.toPx(a.y), p.x, p.y);
-          const db = dist2(MB.toPx(b.x), MB.toPx(b.y), p.x, p.y);
-          return db - da;
-        }).slice(0, 12);
+        options = this.maze.floorsAround(pt.x, pt.y, 18).filter((t) => {
+          const x = MB.toPx(t.x), y = MB.toPx(t.y);
+          return dist2(x, y, p.x, p.y) > 80 * 80;
+        });
       }
-      return options.length ? pick(options) : this.maze.spawn;
+      if (!options.length) {
+        const around = this.maze.floorsAround(pt.x, pt.y, 20);
+        if (around.length) {
+          around.sort((a, b) => dist2(MB.toPx(b.x), MB.toPx(b.y), p.x, p.y) -
+            dist2(MB.toPx(a.x), MB.toPx(a.y), p.x, p.y));
+          return around[0];
+        }
+        return this.maze.spawn;
+      }
+      return pick(options);
     }
 
     spawnEnemy(typeId, withEffect) {
@@ -728,11 +768,152 @@
       return pick(Object.keys(D.WEAPONS));
     }
 
+    /* ---------- nekonečný svět, truhly a východ ---------- */
+    addChestAt(tile) {
+      const key = tile.x + "," + tile.y;
+      if (!this.chestTiles) this.chestTiles = new Set();
+      if (this.chestTiles.has(key)) return null;
+      this.chestTiles.add(key);
+      const chest = {
+        x: MB.toPx(tile.x), y: MB.toPx(tile.y),
+        tileX: tile.x, tileY: tile.y,
+        opened: false, gone: false,
+        attemptsLeft: 2, lockedUntil: 0, openAt: 0,
+        phase: rnd(0, TAU)
+      };
+      this.chests.push(chest);
+      return chest;
+    }
+
+    spawnChestInChunk(chunk) {
+      if (!chunk || !chunk.floors.length) return null;
+      const spawnX = this.maze.spawn.x, spawnY = this.maze.spawn.y;
+      const candidates = [];
+      for (const t of chunk.deadEnds) {
+        if (Math.abs(t.x - spawnX) + Math.abs(t.y - spawnY) < 3) continue;
+        if (this.chestTiles && this.chestTiles.has(t.x + "," + t.y)) continue;
+        candidates.push(t);
+      }
+      if (!candidates.length) {
+        for (const t of chunk.floors) {
+          if (Math.abs(t.x - spawnX) + Math.abs(t.y - spawnY) < 3) continue;
+          if (this.chestTiles && this.chestTiles.has(t.x + "," + t.y)) continue;
+          candidates.push(t);
+        }
+      }
+      if (!candidates.length) return null;
+      const tile = candidates[Math.floor(Math.random() * candidates.length)];
+      return this.addChestAt(tile);
+    }
+
+    spawnGuaranteedChests(count) {
+      const spawn = this.maze.spawn;
+      const around = this.maze.floorsAround(spawn.x, spawn.y, 14);
+      const deadEnds = around.filter((t) => {
+        if (Math.abs(t.x - spawn.x) + Math.abs(t.y - spawn.y) < 4) return false;
+        return this.maze.neighbors(t.x, t.y).length === 1;
+      });
+      const pool = deadEnds.length >= count ? deadEnds : around.filter((t) =>
+        Math.abs(t.x - spawn.x) + Math.abs(t.y - spawn.y) >= 4);
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      let placed = 0;
+      for (const tile of pool) {
+        if (placed >= count) break;
+        if (this.chests.some((c) => Math.abs(c.tileX - tile.x) + Math.abs(c.tileY - tile.y) < 5)) continue;
+        if (this.addChestAt(tile)) placed++;
+      }
+    }
+
+    ensureWorld() {
+      const p = this.player;
+      if (!p) return;
+      const pcx = Math.floor(p.x / CHUNK_PX);
+      const pcy = Math.floor(p.y / CHUNK_PX);
+      const radius = 2;
+      for (let cy = pcy - radius; cy <= pcy + radius; cy++) {
+        for (let cx = pcx - radius; cx <= pcx + radius; cx++) {
+          const key = cx + "," + cy;
+          if (this.seenChunks.has(key)) continue;
+          this.seenChunks.add(key);
+          const chunk = this.maze.getChunk(cx, cy);
+          if (cx === 0 && cy === 0) continue;
+          if (this.maze.chunkRandom(cx, cy, 7) < 0.34) {
+            this.spawnChestInChunk(chunk);
+          }
+        }
+      }
+    }
+
+    generateExit() {
+      const p = this.player;
+      const pt = { x: Math.floor(p.x / TILE), y: Math.floor(p.y / TILE) };
+      let result = this.maze.findDistantTile(pt.x, pt.y, 22, 42, Math.random);
+      if (!result) result = this.maze.findDistantTile(pt.x, pt.y, 12, 26, Math.random);
+      if (!result) {
+        const around = this.maze.floorsAround(pt.x, pt.y, 18).filter((t) => {
+          const d = Math.abs(t.x - pt.x) + Math.abs(t.y - pt.y);
+          return d >= 8;
+        });
+        if (around.length) {
+          const tile = pick(around);
+          const path = this.maze.findPath(pt.x, pt.y, tile.x, tile.y, 20000);
+          if (path) result = { x: tile.x, y: tile.y, path };
+        }
+      }
+      if (!result) return false;
+      this.portal = {
+        x: MB.toPx(result.x), y: MB.toPx(result.y),
+        tileX: result.x, tileY: result.y,
+        active: true, pulse: 0
+      };
+      this.exitPath = result.path || [];
+      this.exitRepathTimer = 0;
+      this.addShockwave(this.portal.x, this.portal.y, 90, "#a78bfa");
+      this.spawnBurst(this.portal.x, this.portal.y, "#a78bfa", 28, 190, 2.6);
+      this.spawnBurst(this.portal.x, this.portal.y, "#38e8ff", 20, 150, 2);
+      AudioFX.portal();
+      return true;
+    }
+
+    updateExitPath(dt) {
+      if (!this.portal || !this.portal.active) return;
+      this.exitRepathTimer -= dt;
+      if (this.exitRepathTimer > 0) return;
+      this.exitRepathTimer = 1.1;
+      const p = this.player;
+      const sx = Math.floor(p.x / TILE), sy = Math.floor(p.y / TILE);
+      const path = this.maze.findPath(sx, sy, this.portal.tileX, this.portal.tileY, 30000);
+      if (path) this.exitPath = path;
+    }
+
+    updateWorld(dt) {
+      const p = this.player;
+      const follow = Math.min(1, dt * 10);
+      this.camera.x += (p.x - this.camera.x) * follow;
+      this.camera.y += (p.y - this.camera.y) * follow;
+
+      this.worldTimer -= dt;
+      if (this.worldTimer <= 0) {
+        this.worldTimer = 0.4;
+        this.ensureWorld();
+      }
+      this.pruneTimer -= dt;
+      if (this.pruneTimer <= 0) {
+        this.pruneTimer = 6;
+        this.maze.prune(this.player.x, this.player.y, 12);
+      }
+      this.updateAmbient(dt);
+      this.updateExitPath(dt);
+    }
+
     findDropPosition(x, y) {
       for (let i = 0; i < 22; i++) {
         const angle = rnd(0, TAU), radius = rnd(10, 34);
-        const px = clamp(x + Math.cos(angle) * radius, 18, W - 18);
-        const py = clamp(y + Math.sin(angle) * radius, 18, H - 18);
+        const px = x + Math.cos(angle) * radius;
+        const py = y + Math.sin(angle) * radius;
         if (!this.circleHitsWall(px, py, 7)) return { x: px, y: py };
       }
       return { x, y };
@@ -786,6 +967,7 @@
         this.updatePortal(dt);
         this.updateEffects(dt);
         this.updateRespawns(dt);
+        this.updateWorld(dt);
         this.cleanup();
         this.updateHUD();
       } else if (this.state === "math") {
@@ -802,19 +984,75 @@
 
       const desired = input.dir;
       if (desired) {
-        if (desired.x !== p.dir.x || desired.y !== p.dir.y) {
-          if (this.canStand(p.x + desired.x * 5, p.y + desired.y * 5, p.r)) {
-            p.dir = { x: desired.x, y: desired.y };
+        p.dir = { x: desired.x, y: desired.y };
+        const step = p.speed * dt;
+        let moved = false;
+
+        const tryMove = (dx, dy) => {
+          if (!dx && !dy) return false;
+          const nx = p.x + dx * step;
+          const ny = p.y + dy * step;
+          if (!this.canStand(nx, ny, p.r)) return false;
+          p.x = nx;
+          p.y = ny;
+          return true;
+        };
+
+        if (desired.x && desired.y) {
+          moved = tryMove(desired.x, desired.y);
+          if (!moved) {
+            if (tryMove(desired.x, 0)) moved = true;
+            if (tryMove(0, desired.y)) moved = true;
+          }
+        } else if (desired.x) {
+          moved = tryMove(desired.x, 0);
+          if (!moved) {
+            // pomůže se zarovnat do chodby místo zaseknutí v rohu
+            const cy = (Math.floor(p.y / TILE) + 0.5) * TILE;
+            const diff = cy - p.y;
+            if (Math.abs(diff) > 0.4 && Math.abs(diff) < TILE * 0.5) {
+              const nudge = clamp(diff, -step, step);
+              if (this.canStand(p.x, p.y + nudge, p.r)) {
+                p.y += nudge;
+                moved = true;
+              }
+            }
+          }
+        } else if (desired.y) {
+          moved = tryMove(0, desired.y);
+          if (!moved) {
+            const cx = (Math.floor(p.x / TILE) + 0.5) * TILE;
+            const diff = cx - p.x;
+            if (Math.abs(diff) > 0.4 && Math.abs(diff) < TILE * 0.5) {
+              const nudge = clamp(diff, -step, step);
+              if (this.canStand(p.x + nudge, p.y, p.r)) {
+                p.x += nudge;
+                moved = true;
+              }
+            }
           }
         }
-        const step = p.speed * dt;
-        const nx = p.x + p.dir.x * step;
-        const ny = p.y + p.dir.y * step;
-        if (this.canStand(nx, ny, p.r)) {
-          p.x = nx; p.y = ny; p.moving = true;
-        } else {
-          p.moving = false;
+
+        // jemné vycentrování v chodbě – zatáčky pak neškrtají o rohy
+        if (moved) {
+          if (desired.x && !desired.y) {
+            const cy = (Math.floor(p.y / TILE) + 0.5) * TILE;
+            const diff = cy - p.y;
+            if (Math.abs(diff) < 7) {
+              const nudge = clamp(diff, -step * 0.6, step * 0.6);
+              if (this.canStand(p.x, p.y + nudge, p.r)) p.y += nudge;
+            }
+          } else if (desired.y && !desired.x) {
+            const cx = (Math.floor(p.x / TILE) + 0.5) * TILE;
+            const diff = cx - p.x;
+            if (Math.abs(diff) < 7) {
+              const nudge = clamp(diff, -step * 0.6, step * 0.6);
+              if (this.canStand(p.x + nudge, p.y, p.r)) p.x += nudge;
+            }
+          }
         }
+
+        p.moving = moved;
       } else {
         p.moving = false;
       }
@@ -944,7 +1182,7 @@
       else chase = tileDist <= e.type.aggro && Math.random() < 0.5;
 
       if (chase) {
-        const path = this.maze.findPath(et.x, et.y, pt.x, pt.y);
+        const path = this.maze.findPath(et.x, et.y, pt.x, pt.y, 5000);
         if (path && path.length) {
           e.target = path[0];
           return;
@@ -983,7 +1221,7 @@
             this.spawnBurst(pr.x, pr.y, pr.color, 5, 70, 1.6);
             break;
           }
-          if (pr.x < -10 || pr.y < -10 || pr.x > W + 10 || pr.y > H + 10) pr.dead = true;
+          if (dist2(pr.x, pr.y, this.player.x, this.player.y) > 1400 * 1400) pr.dead = true;
         }
       }
       this.projectiles = this.projectiles.filter((pr) => !pr.dead);
@@ -1101,15 +1339,14 @@
           this.score += 40;
           toast("Štít je plný – +40 bodů", "gold", "🛡️");
         }
-      } else if (item.kind === "speed") {
-        if (p.speed < 230) {
-          p.speed = Math.min(230, p.speed * 1.07);
-          this.addFloater(p.x, p.y - 20, "RYCHLEJI!", "#bef264");
-          toast("Křídlové boty: +7 % rychlosti", "success", "👟");
-        } else {
-          this.score += 40;
-          toast("Maximální rychlost – +40 bodů", "gold", "👟");
-        }
+      } else if (item.kind === "key") {
+        this.hasKey = true;
+        this.keyDropped = true;
+        this.addFloater(p.x, p.y - 22, "KLÍČ!", "#fde047");
+        toast("Máš klíč od východu! Následuj šipky.", "gold", "🗝️");
+        AudioFX.portal();
+        this.shake = Math.max(this.shake, 8);
+        if (!this.portal) this.generateExit();
       } else if (item.kind === "magnet") {
         if (p.magnet < 90) {
           p.magnet = Math.min(90, p.magnet + 35);
@@ -1133,7 +1370,7 @@
       let best = Infinity;
       const reach = TILE * 1.65;
       for (const c of this.chests) {
-        if (c.opened) continue;
+        if (c.opened || c.gone) continue;
         const d = dist2(c.x, c.y, this.player.x, this.player.y);
         if (d < reach * reach && d < best) {
           best = d;
@@ -1153,17 +1390,6 @@
         return;
       }
       this.openMath(chest);
-    }
-
-    activatePortal() {
-      if (!this.portal || this.portal.active) return;
-      this.portal.active = true;
-      this.addShockwave(this.portal.x, this.portal.y, 90, "#a78bfa");
-      this.spawnBurst(this.portal.x, this.portal.y, "#a78bfa", 28, 190, 2.6);
-      this.spawnBurst(this.portal.x, this.portal.y, "#38e8ff", 20, 150, 2);
-      this.shake = Math.max(this.shake, 9);
-      AudioFX.portal();
-      toast("Všechny truhly jsou otevřené! Najdi portál.", "gold", "🌀");
     }
 
     updatePortal(dt) {
@@ -1218,12 +1444,25 @@
     }
 
     cleanup() {
-      this.enemies = this.enemies.filter((e) => !e.dead);
+      const p = this.player;
+      this.enemies = this.enemies.filter((e) => {
+        if (e.dead) return false;
+        if (dist2(e.x, e.y, p.x, p.y) > 1600 * 1600) {
+          this.respawnQueue.push({ at: this.elapsed + rnd(2, 5) });
+          return false;
+        }
+        return true;
+      });
+      this.chests = this.chests.filter((c) => {
+        if (!c.gone) return true;
+        return this.elapsed - c.goneAt < 1.2;
+      });
     }
 
     /* ---------- truhly, matematika ---------- */
     openMath(chest) {
-      if (this.state !== "playing" || !chest || chest.opened) return;
+      if (this.state !== "playing" || !chest || chest.opened || chest.gone) return;
+      if (chest.attemptsLeft <= 0) return;
       this.state = "math";
       input.clear();
       let question;
@@ -1233,20 +1472,21 @@
         console.error(e);
         question = { text: "2 + 2 = ?", answer: "4", choices: ["4", "3", "5", "6"], hint: "Sečti obě čísla." };
       }
+      const attempt = 3 - chest.attemptsLeft;
       this.math = {
-        chest, question,
+        chest, question, attempt,
         timeLeft: this.level.mathTime,
         initialTime: this.level.mathTime,
         solved: false, failed: false,
         closeTimer: 0, hintUsed: false, gain: 0
       };
       ui.mathPanel.classList.remove("success", "failed", "shake");
-      ui.mathLevelChip.textContent = this.level.grade;
+      ui.mathLevelChip.textContent = `${this.level.grade} · pokus ${attempt}/2`;
       ui.mathHint.classList.add("hidden");
       ui.mathHint.textContent = "";
       ui.mathHintBtn.disabled = false;
       ui.mathFeedback.className = "math-feedback";
-      ui.mathFeedback.textContent = "Vyber správnou odpověď.";
+      ui.mathFeedback.textContent = `Vyber správnou odpověď. Pokus ${attempt}/2.`;
       ui.mathQuestion.textContent = question.text;
       ui.mathQuestion.style.fontSize = question.text.length > 42
         ? "clamp(19px,3.1vw,28px)"
@@ -1319,20 +1559,13 @@
         this.spawnBurst(m.chest.x, m.chest.y, "#34d399", 22, 155, 2.4);
         this.updateHUD(true);
       } else {
-        btn.disabled = true;
         btn.classList.add("wrong");
         this.wrong++;
         this.streak = 0;
-        m.timeLeft = Math.max(0, m.timeLeft - 4);
-        this.setMathFeedback("Špatně! Ztrácíš 4 sekundy. Zkus jinou odpověď.", "bad");
         ui.mathPanel.classList.add("shake");
         setTimeout(() => ui.mathPanel.classList.remove("shake"), 420);
         AudioFX.wrong();
-        this.updateMathTimerUI();
-        this.updateHUD(true);
-        if (m.timeLeft <= 0) {
-          this.failMath("Čas vypršel! Truhla zůstala zamčená.");
-        }
+        this.failMath("Špatná odpověď!");
       }
     }
 
@@ -1381,14 +1614,22 @@
       m.failed = true;
       m.closeTimer = 2.1;
       this.streak = 0;
-      m.chest.lockedUntil = this.elapsed + 12;
+      const chest = m.chest;
+      chest.attemptsLeft = Math.max(0, chest.attemptsLeft - 1);
+      const gone = chest.attemptsLeft <= 0;
+      if (!gone) chest.lockedUntil = this.elapsed + 8;
       const buttons = Array.from(ui.mathAnswers.querySelectorAll(".answer-btn"));
       buttons.forEach((b) => {
         b.disabled = true;
         if (b.querySelector("span").textContent === m.question.answer) b.classList.add("correct");
       });
       ui.mathPanel.classList.add("failed");
-      this.setMathFeedback(reason, "bad");
+      this.setMathFeedback(
+        gone
+          ? `${reason} Truhla zmizela a nic z ní nepadne.`
+          : `${reason} Zbývá poslední pokus – truhla se odemkne za 8 s.`,
+        "bad"
+      );
       this.updateMathTimerUI();
       AudioFX.wrong();
       this.updateHUD(true);
@@ -1411,15 +1652,26 @@
         AudioFX.chest();
         toast(`Truhla otevřena! +${formatScore.format(m.gain)} bodů`, "gold", "🧰");
         this.dropChestLoot(chest, this.chestsOpened === 1);
-        if (this.chestsOpened >= this.chests.length) this.activatePortal();
+      } else if (chest.attemptsLeft <= 0) {
+        chest.gone = true;
+        chest.goneAt = this.elapsed;
+        this.chestsLost++;
+        this.spawnBurst(chest.x, chest.y, "#64748b", 20, 120, 2.2);
+        this.addShockwave(chest.x, chest.y, 34, "#64748b");
+        toast("Truhla zmizela bez odměny.", "danger", "💨");
       } else {
-        toast("Truhla je zamčená. Zkus to znovu za 12 s.", "danger", "🔒");
+        toast("Truhla je zamčená. Zbývá poslední pokus.", "danger", "🔒");
       }
       this.updateHUD(true);
     }
 
     dropChestLoot(chest, firstChest) {
       const items = [];
+      const canDropKey = !this.hasKey && !this.keyDropped;
+      if (canDropKey && Math.random() < 0.25) {
+        items.push({ kind: "key" });
+        this.keyDropped = true;
+      }
       if (firstChest || Math.random() < 0.33) {
         items.push({ kind: "weapon", weaponId: this.randomWeaponId() });
       }
@@ -1429,17 +1681,16 @@
         util = "heal";
       } else {
         const roll = Math.random();
-        if (roll < 0.2) util = "heal";
-        else if (roll < 0.4) util = "shield";
-        else if (roll < 0.54) util = "speed";
-        else if (roll < 0.67) util = "maxhp";
+        if (roll < 0.24) util = "heal";
+        else if (roll < 0.46) util = "shield";
+        else if (roll < 0.62) util = "maxhp";
         else if (roll < 0.8) util = "magnet";
         else util = "gem";
       }
       items.push({ kind: util });
       if (Math.random() < 0.32) items.push({ kind: Math.random() < 0.72 ? "gem" : "heal" });
       if (firstChest && !items.some((i) => i.kind === "heal")) items.push({ kind: "heal" });
-      items.forEach((item, index) => {
+      items.forEach((item) => {
         this.addPickup(item.kind, chest.x, chest.y, item.weaponId);
       });
     }
@@ -1469,14 +1720,15 @@
         cache.hpLow = low;
       }
       set(ui.scoreText, "score", formatScore.format(this.score));
-      set(ui.chestCount, "chestCount", `${this.chestsOpened} / ${this.chests.length}`);
-      const chestPct = this.chests.length ? Math.round((this.chestsOpened / this.chests.length) * 100) : 0;
-      const cw = chestPct + "%";
+      set(ui.chestCount, "chestCount", this.hasKey ? "🗝 1 / 1" : "🗝 0 / 1");
+      const cw = this.hasKey ? "100%" : "0%";
       if (cache.chestWidth !== cw) {
         ui.chestFill.style.width = cw;
         cache.chestWidth = cw;
       }
-      const label = this.portal && this.portal.active ? "Portál aktivní – najdi východ! " : "Otevři truhly ";
+      const label = this.portal && this.portal.active
+        ? "Východ aktivní – následuj šipky! "
+        : "Najdi klíč v truhlách ";
       if (ui.objectiveText.firstChild && cache.objective !== label) {
         ui.objectiveText.firstChild.nodeValue = label;
         cache.objective = label;
@@ -1574,10 +1826,10 @@
       const totalQuestions = this.correct + this.wrong;
       const accuracy = totalQuestions ? Math.round((this.correct / totalQuestions) * 100) : 0;
       ui.endSub.textContent = won
-        ? `Bludištěm jsi prošel za ${formatTime(this.elapsed)}. Bonus ${formatScore.format(bonus)} bodů.`
-        : `Truhly: ${this.chestsOpened} z ${this.chests.length}. Zkus to znovu – bludiště i příklady budou nové.`;
+        ? `Z nekonečného bludiště jsi utekl za ${formatTime(this.elapsed)}. Bonus ${formatScore.format(bonus)} bodů.`
+        : `Otevřené truhly: ${this.chestsOpened}. Najdi klíč a východ dřív, než tě příšery dostihnou.`;
       ui.endStats.innerHTML = `
-        <div class="stat"><b>${this.chestsOpened} / ${this.chests.length}</b><small>Truhly</small></div>
+        <div class="stat"><b>${this.chestsOpened}</b><small>Truhly</small></div>
         <div class="stat"><b>${this.kills}</b><small>Poražení</small></div>
         <div class="stat"><b>${totalQuestions ? accuracy + " %" : "–"}</b><small>Přesnost</small></div>
       `;
@@ -1588,8 +1840,12 @@
 
     /* ---------- vykreslování ---------- */
     render() {
-      if (!this.maze || !this.mazeCanvas || !this.player) return;
+      if (!this.maze || !this.player) return;
       const now = performance.now() / 1000;
+      const cam = this.camera;
+      const viewLeft = cam.x - W / 2;
+      const viewTop = cam.y - H / 2;
+
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
       ctx.clearRect(0, 0, W, H);
       ctx.fillStyle = "#050a14";
@@ -1598,9 +1854,22 @@
       const shakeX = this.shake > 0 ? rnd(-this.shake, this.shake) : 0;
       const shakeY = this.shake > 0 ? rnd(-this.shake, this.shake) : 0;
       ctx.save();
-      ctx.translate(shakeX, shakeY);
+      ctx.translate(-viewLeft + shakeX, -viewTop + shakeY);
 
-      ctx.drawImage(this.mazeCanvas, 0, 0, W, H);
+      // Viditelné části nekonečné mapy
+      const minCX = Math.floor(viewLeft / CHUNK_PX) - 1;
+      const maxCX = Math.floor((viewLeft + W) / CHUNK_PX) + 1;
+      const minCY = Math.floor(viewTop / CHUNK_PX) - 1;
+      const maxCY = Math.floor((viewTop + H) / CHUNK_PX) + 1;
+      for (let cy = minCY; cy <= maxCY; cy++) {
+        for (let cx = minCX; cx <= maxCX; cx++) {
+          const chunk = this.maze.getChunk(cx, cy);
+          if (!chunk.canvas || chunk.canvasDpr !== DPR) {
+            buildChunkCanvas(this.maze, chunk, DPR);
+          }
+          ctx.drawImage(chunk.canvas, cx * CHUNK_PX, cy * CHUNK_PX, CHUNK_PX, CHUNK_PX);
+        }
+      }
 
       // jemné světlo kolem hráče
       const p = this.player;
@@ -1626,6 +1895,7 @@
       }
       ctx.restore();
 
+      this.drawExitPath(now);
       this.drawPortal(now);
       this.drawChests(now);
       this.drawPickups(now);
@@ -1640,12 +1910,51 @@
 
       ctx.restore();
 
+      // vinětace obrazovky
+      const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.9);
+      vig.addColorStop(0, "rgba(2,5,12,0)");
+      vig.addColorStop(1, "rgba(2,5,12,.55)");
+      ctx.fillStyle = vig;
+      ctx.fillRect(0, 0, W, H);
+
       if (this.player.flash > 0) {
         ctx.save();
         ctx.fillStyle = `rgba(251,113,133,${0.12 * this.player.flash})`;
         ctx.fillRect(0, 0, W, H);
         ctx.restore();
       }
+    }
+
+    drawExitPath(now) {
+      if (!this.portal || !this.portal.active || !this.exitPath.length) return;
+      const cam = this.camera;
+      const margin = 120;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      for (let i = 0; i < this.exitPath.length - 1; i += 2) {
+        const a = this.exitPath[i];
+        const b = this.exitPath[i + 1] || this.portal;
+        const ax = MB.toPx(a.x), ay = MB.toPx(a.y);
+        if (Math.abs(ax - cam.x) > W / 2 + margin || Math.abs(ay - cam.y) > H / 2 + margin) continue;
+        const angle = Math.atan2(MB.toPx(b.y) - ay, MB.toPx(b.x) - ax);
+        const pulse = 0.5 + 0.5 * Math.sin(now * 4 - i * 0.55);
+        ctx.save();
+        ctx.translate(ax, ay);
+        ctx.rotate(angle);
+        ctx.globalAlpha = 0.28 + 0.5 * pulse;
+        ctx.fillStyle = "#fde047";
+        ctx.shadowColor = "rgba(253,224,71,.8)";
+        ctx.shadowBlur = 7;
+        ctx.beginPath();
+        ctx.moveTo(7, 0);
+        ctx.lineTo(-4, -5);
+        ctx.lineTo(-1.5, 0);
+        ctx.lineTo(-4, 5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.restore();
     }
 
     drawPortal(now) {
@@ -1703,7 +2012,10 @@
     }
 
     drawChests(now) {
+      const cam = this.camera;
       for (const c of this.chests) {
+        if (c.gone) continue;
+        if (Math.abs(c.x - cam.x) > W / 2 + 80 || Math.abs(c.y - cam.y) > H / 2 + 80) continue;
         const locked = !c.opened && this.elapsed < c.lockedUntil;
         const y = c.y + (c.opened ? 0 : Math.sin(now * 2.2 + c.phase) * 1.4);
         ctx.save();
@@ -1796,8 +2108,10 @@
     }
 
     drawPickups(now) {
+      const cam = this.camera;
       for (const item of this.pickups) {
         if (item.collected) continue;
+        if (Math.abs(item.x - cam.x) > W / 2 + 80 || Math.abs(item.y - cam.y) > H / 2 + 80) continue;
         const meta = item.kind === "weapon"
           ? D.WEAPONS[item.weaponId]
           : D.LOOT_META[item.kind];
@@ -2160,13 +2474,16 @@
       const c = this.nearChest;
       if (!c) return;
       const locked = this.elapsed < c.lockedUntil;
-      const label = locked ? `Zamčeno ${Math.ceil(c.lockedUntil - this.elapsed)} s` : "Otevřít truhlu";
+      const label = locked
+        ? `Zamčeno ${Math.ceil(c.lockedUntil - this.elapsed)} s`
+        : `Otevřít truhlu (${c.attemptsLeft}/2)`;
       ctx.save();
       ctx.font = "650 11px 'Segoe UI', sans-serif";
       const textW = ctx.measureText(label).width;
       const keyW = 20, pad = 9, gap = 7, h = 27;
       const w = pad + (locked ? 0 : keyW + gap) + textW + pad;
-      const x = clamp(c.x - w / 2, 6, W - w - 6);
+      const viewLeft = this.camera.x - W / 2;
+      const x = clamp(c.x - w / 2, viewLeft + 6, viewLeft + W - w - 6);
       const y = c.y - 40;
       ctx.fillStyle = "rgba(6,12,24,.94)";
       ctx.strokeStyle = locked ? "rgba(251,113,133,.5)" : "rgba(251,191,36,.55)";
@@ -2205,7 +2522,12 @@
     drawExitArrow(now) {
       if (!this.portal || !this.portal.active) return;
       const p = this.player;
-      const angle = Math.atan2(this.portal.y - p.y, this.portal.x - p.x);
+      let target = this.portal;
+      if (this.exitPath && this.exitPath.length) {
+        const next = this.exitPath[0];
+        target = { x: MB.toPx(next.x), y: MB.toPx(next.y) };
+      }
+      const angle = Math.atan2(target.y - p.y, target.x - p.x);
       const pulse = 0.6 + 0.4 * Math.sin(now * 5);
       const r = 38 + Math.sin(now * 3) * 3;
       const x = p.x + Math.cos(angle) * r;
@@ -2375,7 +2697,12 @@
     if (Math.abs(newDpr - DPR) > 0.05) {
       DPR = newDpr;
       resizeCanvas();
-      if (game.maze) game.mazeCanvas = buildMazeCanvas(game.maze, DPR);
+      if (game.maze) {
+        for (const chunk of game.maze.chunks.values()) {
+          chunk.canvas = null;
+          chunk.canvasDpr = 0;
+        }
+      }
     }
   });
 

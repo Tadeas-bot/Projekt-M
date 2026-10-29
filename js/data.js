@@ -189,9 +189,9 @@
     heal: { kind: "heal", name: "Léčivý lektvar", icon: "❤️", color: "#fb7185", label: "+30 HP" },
     maxhp: { kind: "maxhp", name: "Srdce obra", icon: "💖", color: "#f472b6", label: "+20 max. HP" },
     shield: { kind: "shield", name: "Ochranný štít", icon: "🛡️", color: "#38e8ff", label: "+1 štít" },
-    speed: { kind: "speed", name: "Křídlové boty", icon: "👟", color: "#a3e635", label: "+7 % rychlosti" },
     magnet: { kind: "magnet", name: "Magnet na poklady", icon: "🧲", color: "#c084fc", label: "Větší dosah sběru" },
-    gem: { kind: "gem", name: "Zlatý drahokam", icon: "💎", color: "#fbbf24", label: "+75 bodů" }
+    gem: { kind: "gem", name: "Zlatý drahokam", icon: "💎", color: "#fbbf24", label: "+75 bodů" },
+    key: { kind: "key", name: "Klíč od východu", icon: "🗝️", color: "#fde047", label: "Odemkne východ" }
   };
 
   const SAVE_KEY = "ciselneBludiste.v1";
@@ -206,7 +206,7 @@
     PLAYER_SPEED: 154,
     PLAYER_RADIUS: 10.5,
     TILE: 32,
-    COLS: 35,
-    ROWS: 23
+    VIEW_COLS: 35,
+    VIEW_ROWS: 23
   };
 })();

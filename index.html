@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#070b18">
+  <title>Číselné bludiště – matematická arkádová hra</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- ===== HERNÍ OBRAZOVKA ===== -->
+    <div id="gameShell" class="game-shell hidden">
+      <header id="hud" class="hud">
+        <div class="hud-left">
+          <div id="hudLevel" class="level-chip">Úroveň</div>
+          <div class="hp-wrap">
+            <span class="hp-icon">♥</span>
+            <div class="hp-bar"><div id="hpFill" class="hp-fill"></div></div>
+            <span id="hpText" class="hp-text">100</span>
+          </div>
+          <div id="shieldChip" class="mini-chip hidden"><span>🛡</span><b id="shieldCount">1</b></div>
+        </div>
+
+        <div class="hud-mid">
+          <div id="objectiveText" class="objective-text">Otevři truhly <b id="chestCount">0 / 4</b></div>
+          <div class="chest-progress"><div id="chestFill" class="chest-fill"></div></div>
+        </div>
+
+        <div class="hud-right">
+          <div class="weapon-chip">
+            <span id="weaponIcon" class="weapon-icon">✨</span>
+            <div class="weapon-info">
+              <b id="weaponName">Jiskra</b>
+              <small id="weaponMeta">DMG 14 · Lv. 1</small>
+            </div>
+          </div>
+          <div class="score-chip"><span>★</span><b id="scoreText">0</b></div>
+          <div id="streakChip" class="mini-chip streak hidden"><span>🔥</span><b id="streakText">×2</b></div>
+          <button id="soundBtn" class="icon-btn" title="Přepnout zvuk" aria-label="Přepnout zvuk">🔊</button>
+          <button id="pauseBtn" class="icon-btn" title="Pauza (Esc)" aria-label="Pauza">⏸</button>
+        </div>
+      </header>
+
+      <div class="canvas-area">
+        <div id="canvasFrame" class="canvas-frame">
+          <canvas id="gameCanvas" aria-label="Herní bludiště"></canvas>
+        </div>
+      </div>
+
+      <!-- Dotykové ovládání -->
+      <div id="touchControls" class="touch-controls hidden">
+        <div class="dpad">
+          <button class="tbtn up" data-dir="up" aria-label="Nahoru">▲</button>
+          <button class="tbtn left" data-dir="left" aria-label="Vlevo">◀</button>
+          <button class="tbtn right" data-dir="right" aria-label="Vpravo">▶</button>
+          <button class="tbtn down" data-dir="down" aria-label="Dolů">▼</button>
+        </div>
+        <div class="action-pad">
+          <button id="touchOpen" class="tbtn action open" aria-label="Otevřít truhlu">E</button>
+          <button id="touchFire" class="tbtn action fire" aria-label="Střelba">✦</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ÚVODNÍ OBRAZOVKA ===== -->
+    <section id="startScreen" class="start-screen">
+      <div class="start-glow glow-a"></div>
+      <div class="start-glow glow-b"></div>
+      <div class="bg-symbols" aria-hidden="true">
+        <span>+</span><span>×</span><span>√</span><span>π</span><span>−</span><span>÷</span><span>Σ</span><span>∞</span>
+      </div>
+
+      <div class="start-content">
+        <header class="hero">
+          <div class="hero-badge"><span class="dot"></span> Matematická arkádová hra</div>
+          <h1 class="game-title">Číselné <span>bludiště</span></h1>
+          <p class="hero-sub">Projdi bludiště, najdi truhly a otevři je pomocí matematiky.<br>Posbírej loot, poraz nepřátele a uteč k portálu.</p>
+        </header>
+
+        <div class="howto">
+          <span><kbd>WASD</kbd> pohyb</span>
+          <span><kbd>SPACE</kbd> střelba</span>
+          <span><kbd>E</kbd> truhla</span>
+          <span><kbd>ESC</kbd> pauza</span>
+        </div>
+
+        <div class="level-head">
+          <div>
+            <h2>Vyber si úroveň</h2>
+            <p>Matematika i nepřátelé se přizpůsobí tvé volbě.</p>
+          </div>
+        </div>
+
+        <div id="levelGrid" class="level-grid"></div>
+
+        <div class="start-actions">
+          <div id="selectedSummary" class="selected-summary"></div>
+          <button id="startBtn" class="btn primary big">Spustit hru <span>→</span></button>
+        </div>
+
+        <footer class="start-footer">
+          <span>Tip: první truhla vždy ukrývá zbraň.</span>
+          <span>Rekordy se ukládají v tomto prohlížeči.</span>
+        </footer>
+      </div>
+    </section>
+
+    <!-- ===== MATEMATICKÁ VÝZVA ===== -->
+    <div id="mathOverlay" class="overlay math-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mathQuestion">
+      <div id="mathPanel" class="math-panel">
+        <div class="math-head">
+          <div class="math-title"><span class="chest-mini">🧰</span><div><span class="eyebrow">Matematická truhla</span><b id="mathLevelChip">3.–4. třída</b></div></div>
+          <div id="mathTimer" class="math-timer"><span>⏱</span><b id="mathSeconds">27</b><small>s</small></div>
+        </div>
+        <div class="timer-track"><div id="mathTimerFill" class="timer-fill"></div></div>
+
+        <h2 id="mathQuestion" class="math-question">7 × 8 = ?</h2>
+        <p id="mathHint" class="math-hint hidden"></p>
+
+        <div id="mathAnswers" class="math-answers"></div>
+
+        <div class="math-foot">
+          <button id="mathHintBtn" class="btn tiny ghost">💡 Nápověda <span>(−5 s)</span></button>
+          <div id="mathFeedback" class="math-feedback" aria-live="polite">Vyber správnou odpověď.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAUZA ===== -->
+    <div id="pauseOverlay" class="overlay hidden">
+      <div class="modal small">
+        <span class="eyebrow">Přestávka</span>
+        <h2>Pauza</h2>
+        <p class="muted">Bludiště na tebe počká.</p>
+        <div class="modal-actions vertical">
+          <button id="resumeBtn" class="btn primary">Pokračovat</button>
+          <button id="restartBtn" class="btn">Restartovat hru</button>
+          <button id="menuBtn" class="btn ghost">Výběr úrovně</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== KONEC HRY / VÍTĚZSTVÍ ===== -->
+    <div id="endOverlay" class="overlay hidden">
+      <div class="modal end-modal">
+        <div id="endIcon" class="end-icon">💀</div>
+        <span id="endEyebrow" class="eyebrow">Konec hry</span>
+        <h2 id="endTitle">Chycen!</h2>
+        <p id="endSub" class="muted"></p>
+        <div id="endStats" class="end-stats"></div>
+        <div id="endScore" class="end-score"></div>
+        <div class="modal-actions">
+          <button id="retryBtn" class="btn primary">Hrát znovu</button>
+          <button id="endMenuBtn" class="btn ghost">Změnit úroveň</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== OZNÁMENÍ ===== -->
+    <div id="toastStack" class="toast-stack" aria-live="polite"></div>
+
+    <div id="rotateHint" class="rotate-hint">
+      <span>📱</span>
+      <p>Pro lepší zážitek otoč telefon na šířku.</p>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/questions.js"></script>
+  <script src="js/maze.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

@@ -37,18 +37,26 @@
 
   /* ---------- ukládání ---------- */
   const Store = {
-    data: { best: {}, sound: true, lastLevel: "trida34" },
+    data: { best: {}, sound: true, lastLevel: "trida34", lastSubject: "matematika" },
     load() {
       try {
         const raw = localStorage.getItem(D.SAVE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed && typeof parsed === "object") {
+            const best = parsed.best && typeof parsed.best === "object" ? parsed.best : {};
+            Object.keys(best).forEach((key) => {
+              if (key.includes(":")) return;
+              const mathKey = key + ":matematika";
+              if (best[mathKey] == null) best[mathKey] = best[key];
+            });
             this.data = {
-              best: parsed.best && typeof parsed.best === "object" ? parsed.best : {},
+              best,
               sound: parsed.sound !== false,
-              lastLevel: parsed.lastLevel || "trida34"
+              lastLevel: parsed.lastLevel || "trida34",
+              lastSubject: parsed.lastSubject || "matematika"
             };
+            this.save();
           }
         }
       } catch (e) { /* localStorage může být vypnuté */ }
@@ -56,10 +64,14 @@
     save() {
       try { localStorage.setItem(D.SAVE_KEY, JSON.stringify(this.data)); } catch (e) { /* ignore */ }
     },
-    best(id) { return Number(this.data.best[id]) || 0; },
-    setBest(id, score) {
-      if (score > this.best(id)) {
-        this.data.best[id] = score;
+    best(id, subjectId) {
+      const key = subjectId ? `${id}:${subjectId}` : id;
+      return Number(this.data.best[key]) || 0;
+    },
+    setBest(id, score, subjectId) {
+      const key = subjectId ? `${id}:${subjectId}` : id;
+      if (score > this.best(id, subjectId)) {
+        this.data.best[key] = score;
         this.save();
         return true;
       }
@@ -178,8 +190,11 @@
     soundBtn: $("soundBtn"), pauseBtn: $("pauseBtn"),
     touchControls: $("touchControls"), touchOpen: $("touchOpen"), touchFire: $("touchFire"),
     levelGrid: $("levelGrid"), selectedSummary: $("selectedSummary"), startBtn: $("startBtn"),
+    subjectCurrentName: $("subjectCurrentName"), changeSubjectBtn: $("changeSubjectBtn"),
+    subjectOverlay: $("subjectOverlay"), subjectGrid: $("subjectGrid"), subjectSub: $("subjectSub"),
+    subjectCloseBtn: $("subjectCloseBtn"),
     mathOverlay: $("mathOverlay"), mathPanel: $("mathPanel"), mathLevelChip: $("mathLevelChip"),
-    mathSeconds: $("mathSeconds"), mathTimer: $("mathTimer"), mathTimerFill: $("mathTimerFill"),
+    mathEyebrow: $("mathEyebrow"),
     mathQuestion: $("mathQuestion"), mathHint: $("mathHint"), mathHintBtn: $("mathHintBtn"),
     mathAnswers: $("mathAnswers"), mathFeedback: $("mathFeedback"),
     pauseOverlay: $("pauseOverlay"), resumeBtn: $("resumeBtn"), restartBtn: $("restartBtn"), menuBtn: $("menuBtn"),
@@ -219,22 +234,39 @@
   }
   function clearToasts() { ui.toastStack.innerHTML = ""; }
 
-  /* ---------- výběr úrovně ---------- */
+  /* ---------- výběr úrovně a předmětu ---------- */
   let selectedLevelId = D.LEVELS.some((l) => l.id === Store.data.lastLevel)
     ? Store.data.lastLevel
     : "trida34";
+  let selectedSubjectId = D.SUBJECTS.some((s) => s.id === Store.data.lastSubject)
+    ? Store.data.lastSubject
+    : "matematika";
+
+  function selectedLevel() {
+    return D.LEVELS.find((l) => l.id === selectedLevelId) || D.LEVELS[2];
+  }
+
+  function selectedSubject() {
+    return D.SUBJECTS.find((s) => s.id === selectedSubjectId) || D.SUBJECTS[1] || D.SUBJECTS[0];
+  }
+
+  function subjectTopics(level, subject) {
+    if (subject.id === "matematika" || !subject.topics) return level.topics;
+    return subject.topics[level.mathTier] || level.topics;
+  }
 
   function buildLevelCards() {
+    const subject = selectedSubject();
     ui.levelGrid.innerHTML = "";
-    D.LEVELS.forEach((level, index) => {
+    D.LEVELS.forEach((level) => {
       const card = document.createElement("button");
       card.type = "button";
       card.className = "level-card";
       card.dataset.id = level.id;
       card.style.setProperty("--card-color", level.color);
       card.style.setProperty("--card-glow", level.glow);
-      const best = Store.best(level.id);
-      const topics = level.topics.map((t) => `<li>${t}</li>`).join("");
+      const best = Store.best(level.id, subject.id);
+      const topics = subjectTopics(level, subject).map((t) => `<li>${t}</li>`).join("");
       const dots = Array.from({ length: 6 }, (_, i) => `<i class="${i < level.difficulty ? "on" : ""}"></i>`).join("");
       card.innerHTML = `
         <span class="check">✓</span>
@@ -254,16 +286,75 @@
       `;
       card.addEventListener("click", () => {
         selectedLevelId = level.id;
+        Store.data.lastLevel = level.id;
+        Store.save();
         AudioFX.init();
-        AudioFX.click();
         updateSelectionUI();
+        openSubjectPicker();
       });
       ui.levelGrid.appendChild(card);
     });
   }
 
-  function selectedLevel() {
-    return D.LEVELS.find((l) => l.id === selectedLevelId) || D.LEVELS[2];
+  function buildSubjectCards() {
+    const level = selectedLevel();
+    ui.subjectGrid.innerHTML = "";
+    D.SUBJECTS.forEach((subject) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "subject-card";
+      card.dataset.id = subject.id;
+      card.style.setProperty("--subject-color", subject.color);
+      card.style.setProperty("--subject-glow", subject.glow);
+      const topics = subjectTopics(level, subject)
+        .slice(0, 3)
+        .map((t) => `<li>${t}</li>`)
+        .join("");
+      card.innerHTML = `
+        <span class="subject-check">✓</span>
+        <span class="subject-icon">${subject.icon}</span>
+        <b class="subject-name">${subject.name}</b>
+        <small class="subject-blurb">${subject.blurb}</small>
+        <ul class="subject-topics">${topics}</ul>
+      `;
+      card.addEventListener("click", () => selectSubject(subject.id, true));
+      ui.subjectGrid.appendChild(card);
+    });
+    updateSubjectCards();
+  }
+
+  function updateSubjectCards() {
+    Array.from(ui.subjectGrid.children).forEach((card) => {
+      card.classList.toggle("selected", card.dataset.id === selectedSubjectId);
+    });
+  }
+
+  function openSubjectPicker() {
+    const level = selectedLevel();
+    ui.subjectSub.textContent = `${level.icon} ${level.grade} · vyber si předmět`;
+    buildSubjectCards();
+    ui.subjectOverlay.classList.remove("hidden");
+    AudioFX.init();
+    AudioFX.click();
+    const selected = ui.subjectGrid.querySelector(".subject-card.selected");
+    if (selected) selected.focus({ preventScroll: true });
+  }
+
+  function closeSubjectPicker() {
+    ui.subjectOverlay.classList.add("hidden");
+  }
+
+  function selectSubject(id, close) {
+    const subject = D.SUBJECTS.find((s) => s.id === id);
+    if (!subject) return;
+    selectedSubjectId = subject.id;
+    Store.data.lastSubject = subject.id;
+    Store.save();
+    buildLevelCards();
+    updateSelectionUI();
+    updateSubjectCards();
+    if (close) closeSubjectPicker();
+    AudioFX.click();
   }
 
   function updateSelectionUI() {
@@ -271,12 +362,15 @@
       card.classList.toggle("selected", card.dataset.id === selectedLevelId);
     });
     const level = selectedLevel();
+    const subject = selectedSubject();
+    ui.subjectCurrentName.textContent = `${subject.icon} ${subject.name}`;
     ui.selectedSummary.innerHTML =
       `Vybráno: <b>${level.grade}</b><span class="sep">•</span>` +
+      `<b>${subject.name}</b><span class="sep">•</span>` +
       `2 pokusy na truhlu<span class="sep">•</span>${level.enemies} nepřátel<span class="sep">•</span>` +
-      `${level.mathTime} s na příklad`;
+      `bez časového limitu`;
     ui.startBtn.innerHTML = `Spustit hru <span>→</span>`;
-    ui.startBtn.setAttribute("aria-label", `Spustit hru za ${level.grade}`);
+    ui.startBtn.setAttribute("aria-label", `Spustit hru za ${level.grade} – ${subject.name}`);
   }
 
   buildLevelCards();
@@ -327,17 +421,25 @@
     AudioFX.init();
     AudioFX.click();
     const level = selectedLevel();
+    const subject = selectedSubject();
     Store.data.lastLevel = level.id;
+    Store.data.lastSubject = subject.id;
     Store.save();
     clearToasts();
     ui.startScreen.classList.add("hidden");
+    ui.subjectOverlay.classList.add("hidden");
     ui.gameShell.classList.remove("hidden");
     ui.endOverlay.classList.add("hidden");
     ui.pauseOverlay.classList.add("hidden");
-    game.start(level);
+    game.start(level, subject);
   }
 
   ui.startBtn.addEventListener("click", beginSelected);
+  ui.changeSubjectBtn.addEventListener("click", openSubjectPicker);
+  ui.subjectCloseBtn.addEventListener("click", closeSubjectPicker);
+  ui.subjectOverlay.addEventListener("click", (e) => {
+    if (e.target === ui.subjectOverlay) closeSubjectPicker();
+  });
   ui.soundBtn.addEventListener("click", () => {
     AudioFX.init();
     AudioFX.setEnabled(!AudioFX.isEnabled());
@@ -550,6 +652,7 @@
       this.runId = 0;
       this.t = 0;
       this.level = null;
+      this.subject = null;
       this.maze = null;
       this.player = null;
       this.weapon = null;
@@ -586,10 +689,11 @@
       this.pruneTimer = 0;
     }
 
-    start(level) {
+    start(level, subject) {
       this.runId++;
       const run = this.runId;
       this.level = level;
+      this.subject = subject || D.SUBJECTS.find((s) => s.id === "matematika") || D.SUBJECTS[0];
       this.state = "playing";
       const seed = (Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0;
       this.maze = MB.generate(seed);
@@ -643,7 +747,7 @@
         this.spawnEnemy(level.enemyMix[i % level.enemyMix.length], false);
       }
 
-      ui.hudLevel.textContent = level.grade;
+      ui.hudLevel.textContent = `${level.grade} · ${this.subject.name}`;
       ui.startScreen.classList.add("hidden");
       ui.mathOverlay.classList.add("hidden");
       ui.pauseOverlay.classList.add("hidden");
@@ -657,7 +761,7 @@
 
       setTimeout(() => {
         if (this.runId === run && this.state === "playing") {
-          toast("Najdi truhlu, stiskni E a vyřeš příklad.", "info", "🧰");
+          toast("Najdi truhlu, stiskni E a vyřeš úkol.", "info", "🧰");
         }
       }, 600);
       setTimeout(() => {
@@ -1459,15 +1563,16 @@
       });
     }
 
-    /* ---------- truhly, matematika ---------- */
+    /* ---------- truhly, úkoly ---------- */
     openMath(chest) {
       if (this.state !== "playing" || !chest || chest.opened || chest.gone) return;
       if (chest.attemptsLeft <= 0) return;
       this.state = "math";
       input.clear();
+      const subject = this.subject || D.SUBJECTS.find((s) => s.id === "matematika") || D.SUBJECTS[0];
       let question;
       try {
-        question = QE.create(this.level);
+        question = QE.create(this.level, subject);
       } catch (e) {
         console.error(e);
         question = { text: "2 + 2 = ?", answer: "4", choices: ["4", "3", "5", "6"], hint: "Sečti obě čísla." };
@@ -1475,13 +1580,17 @@
       const attempt = 3 - chest.attemptsLeft;
       this.math = {
         chest, question, attempt,
-        timeLeft: this.level.mathTime,
-        initialTime: this.level.mathTime,
         solved: false, failed: false,
         closeTimer: 0, hintUsed: false, gain: 0
       };
+      const subjectLabel = subject.id === "cestina"
+        ? "Česká truhla"
+        : subject.id === "anglictina"
+          ? "Anglická truhla"
+          : "Matematická truhla";
       ui.mathPanel.classList.remove("success", "failed", "shake");
-      ui.mathLevelChip.textContent = `${this.level.grade} · pokus ${attempt}/2`;
+      ui.mathEyebrow.textContent = subjectLabel;
+      ui.mathLevelChip.textContent = `${this.level.grade} · ${subject.name} · pokus ${attempt}/2`;
       ui.mathHint.classList.add("hidden");
       ui.mathHint.textContent = "";
       ui.mathHintBtn.disabled = false;
@@ -1509,7 +1618,6 @@
         ui.mathAnswers.appendChild(btn);
       });
       ui.mathOverlay.classList.remove("hidden");
-      this.updateMathTimerUI();
       AudioFX.pickup();
       const first = ui.mathAnswers.querySelector(".answer-btn");
       if (first) first.focus({ preventScroll: true });
@@ -1518,20 +1626,6 @@
     setMathFeedback(text, type) {
       ui.mathFeedback.className = "math-feedback" + (type ? " " + type : "");
       ui.mathFeedback.textContent = text;
-    }
-
-    updateMathTimerUI() {
-      if (!this.math) return;
-      const m = this.math;
-      const ratio = clamp(m.timeLeft / m.initialTime, 0, 1);
-      ui.mathTimerFill.style.width = (ratio * 100).toFixed(1) + "%";
-      ui.mathSeconds.textContent = String(Math.max(0, Math.ceil(m.timeLeft)));
-      const warn = m.timeLeft <= 6;
-      ui.mathTimer.classList.toggle("warn", warn);
-      ui.mathTimerFill.classList.toggle("warn", warn);
-      if (!m.solved && !m.failed) {
-        ui.mathHintBtn.disabled = m.hintUsed || m.timeLeft <= 5.5;
-      }
     }
 
     answerMath(index) {
@@ -1547,7 +1641,7 @@
         this.correct++;
         this.streak++;
         const streakBonus = Math.max(0, this.streak - 1) * 30;
-        const gain = Math.round((80 + Math.round(m.timeLeft * 6) + streakBonus) * (1 + this.level.mathTier * 0.06));
+        const gain = Math.round((80 + streakBonus) * (1 + this.level.mathTier * 0.06));
         m.gain = gain;
         m.closeTimer = 1.4;
         this.score += gain;
@@ -1574,17 +1668,11 @@
       const m = this.math;
       if (m.hintUsed || m.solved || m.failed) return;
       m.hintUsed = true;
-      m.timeLeft = Math.max(0, m.timeLeft - 5);
       ui.mathHint.textContent = m.question.hint;
       ui.mathHint.classList.remove("hidden");
       ui.mathHintBtn.disabled = true;
-      this.setMathFeedback("Nápověda odečtena: −5 sekundy.", "tip");
+      this.setMathFeedback("Nápověda odhalena. Máš čas, jak dlouho potřebuješ.", "tip");
       AudioFX.tick();
-      this.updateMathTimerUI();
-      if (m.timeLeft <= 0) {
-        this.wrong++;
-        this.failMath("Čas vypršel! Truhla zůstala zamčená.");
-      }
     }
 
     updateMath(dt) {
@@ -1593,17 +1681,6 @@
       if (m.solved || m.failed) {
         m.closeTimer -= dt;
         if (m.closeTimer <= 0) this.finishMath();
-        return;
-      }
-      const before = Math.ceil(m.timeLeft);
-      m.timeLeft -= dt;
-      const after = Math.ceil(m.timeLeft);
-      if (after !== before && after > 0 && after <= 5) AudioFX.tick();
-      this.updateMathTimerUI();
-      if (m.timeLeft <= 0) {
-        m.timeLeft = 0;
-        this.wrong++;
-        this.failMath("Čas vypršel! Truhla zůstala zamčená.");
       }
     }
 
@@ -1630,7 +1707,6 @@
           : `${reason} Zbývá poslední pokus – truhla se odemkne za 8 s.`,
         "bad"
       );
-      this.updateMathTimerUI();
       AudioFX.wrong();
       this.updateHUD(true);
     }
@@ -1778,7 +1854,7 @@
       ui.pauseOverlay.classList.add("hidden");
       ui.endOverlay.classList.add("hidden");
       clearToasts();
-      this.start(this.level);
+      this.start(this.level, this.subject);
     }
 
     returnToMenu() {
@@ -1787,6 +1863,7 @@
       ui.pauseOverlay.classList.add("hidden");
       ui.endOverlay.classList.add("hidden");
       ui.mathOverlay.classList.add("hidden");
+      ui.subjectOverlay.classList.add("hidden");
       ui.gameShell.classList.add("hidden");
       ui.startScreen.classList.remove("hidden");
       resetStartScroll();
@@ -1811,7 +1888,7 @@
         AudioFX.dead();
       }
       this.updateHUD(true);
-      const isRecord = Store.setBest(this.level.id, this.score);
+      const isRecord = Store.setBest(this.level.id, this.score, this.subject && this.subject.id);
       buildLevelCards();
       updateSelectionUI();
       this.showEnd(won, isRecord, bonus);
@@ -2588,6 +2665,13 @@
     AudioFX.init();
     const key = String(e.key || "").toLowerCase();
     if (game.state === "menu") {
+      if (!ui.subjectOverlay.classList.contains("hidden")) {
+        if (key === "escape") {
+          e.preventDefault();
+          closeSubjectPicker();
+        }
+        return;
+      }
       if (e.key === "Enter" && !(e.target && e.target.closest && e.target.closest("button"))) {
         e.preventDefault();
         beginSelected();

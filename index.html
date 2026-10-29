@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#070b18">
-  <title>Číselné bludiště – matematická arkádová hra</title>
+  <title>Číselné bludiště – vzdělávací arkádová hra</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -74,9 +74,9 @@
 
       <div class="start-content">
         <header class="hero">
-          <div class="hero-badge"><span class="dot"></span> Matematická arkádová hra</div>
+          <div class="hero-badge"><span class="dot"></span> Vzdělávací arkádová hra</div>
           <h1 class="game-title">Číselné <span>bludiště</span></h1>
-          <p class="hero-sub">Projdi nekonečné bludiště, najdi klíč v truhle a uteč východem.<br>Klíč padá s 25% šancí a šipky tě dovedou k portálu.</p>
+          <p class="hero-sub">Projdi nekonečné bludiště, najdi klíč v truhle a uteč východem.<br>Vyber si češtinu, matematiku nebo angličtinu – bez časového limitu.</p>
         </header>
 
         <div class="howto">
@@ -89,7 +89,12 @@
         <div class="level-head">
           <div>
             <h2>Vyber si úroveň</h2>
-            <p>Matematika i nepřátelé se přizpůsobí tvé volbě.</p>
+            <p>Vyber úroveň a předmět. Obtížnost se přizpůsobí tvé volbě.</p>
+          </div>
+          <div class="subject-current">
+            <span>Předmět</span>
+            <b id="subjectCurrentName">🧮 Matematika</b>
+            <button id="changeSubjectBtn" class="btn tiny ghost" type="button">Změnit</button>
           </div>
         </div>
 
@@ -101,20 +106,30 @@
         </div>
 
         <footer class="start-footer">
-          <span>Tip: truhla má 2 pokusy. Klíč padá s 25% šancí.</span>
+          <span>Tip: truhla má 2 pokusy a žádný časový limit. Klíč padá s 25% šancí.</span>
           <span>Rekordy se ukládají v tomto prohlížeči.</span>
         </footer>
       </div>
     </section>
 
-    <!-- ===== MATEMATICKÁ VÝZVA ===== -->
+    <!-- ===== VÝBĚR PŘEDMĚTU ===== -->
+    <div id="subjectOverlay" class="overlay subject-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="subjectTitle">
+      <div class="modal subject-modal">
+        <span class="eyebrow">Předmět</span>
+        <h2 id="subjectTitle">Co budeš procvičovat?</h2>
+        <p id="subjectSub" class="muted">Vyber si předmět pro svou úroveň.</p>
+        <div id="subjectGrid" class="subject-grid"></div>
+        <button id="subjectCloseBtn" class="btn ghost subject-close" type="button">Ponechat současný předmět</button>
+      </div>
+    </div>
+
+    <!-- ===== VÝZVA V TRUHLE ===== -->
     <div id="mathOverlay" class="overlay math-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mathQuestion">
       <div id="mathPanel" class="math-panel">
         <div class="math-head">
-          <div class="math-title"><span class="chest-mini">🧰</span><div><span class="eyebrow">Matematická truhla</span><b id="mathLevelChip">3.–4. třída</b></div></div>
-          <div id="mathTimer" class="math-timer"><span>⏱</span><b id="mathSeconds">27</b><small>s</small></div>
+          <div class="math-title"><span class="chest-mini">🧰</span><div><span id="mathEyebrow" class="eyebrow">Truhla</span><b id="mathLevelChip">3.–4. třída</b></div></div>
+          <div class="no-limit-badge">♾️ Bez časového limitu</div>
         </div>
-        <div class="timer-track"><div id="mathTimerFill" class="timer-fill"></div></div>
 
         <h2 id="mathQuestion" class="math-question">7 × 8 = ?</h2>
         <p id="mathHint" class="math-hint hidden"></p>
@@ -122,7 +137,7 @@
         <div id="mathAnswers" class="math-answers"></div>
 
         <div class="math-foot">
-          <button id="mathHintBtn" class="btn tiny ghost">💡 Nápověda <span>(−5 s)</span></button>
+          <button id="mathHintBtn" class="btn tiny ghost">💡 Nápověda</button>
           <div id="mathFeedback" class="math-feedback" aria-live="polite">Vyber správnou odpověď.</div>
         </div>
       </div>

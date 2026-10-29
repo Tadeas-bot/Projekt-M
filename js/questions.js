@@ -24,6 +24,182 @@
     return a;
   };
 
+  /* ---------- banky otázek pro češtinu a angličtinu ---------- */
+  const q = (text, answer, wrong, category, hint) => ({ text, answer, wrong, category, hint });
+
+  const CZECH_BANK = {
+    1: [
+      q("Které písmeno je samohláska?", "A", ["B", "M", "K"], "hlásky", "Samohlásky jsou A, E, I, O, U, Y."),
+      q("Kolik slabik má slovo MÁMA?", "2", ["1", "3", "4"], "slabiky", "Vytleskej slovo po slabikách: Má-ma."),
+      q("Které slovo se rýmuje se slovem KOČKA?", "myška", ["pes", "strom", "auto"], "rýmy", "Hledej slovo, které končí stejně."),
+      q("Doplň písmeno: MÁ_A", "M", ["P", "B", "T"], "písmena", "Vznikne slovo pro maminku."),
+      q("Které slovo označuje zvíře?", "pes", ["stůl", "kniha", "okno"], "slovní zásoba", "Zvíře je živé a může štěkat."),
+      q("Kolik písmen má slovo SLUNCE?", "6", ["5", "7", "4"], "písmena", "Počítej písmena: S-L-U-N-C-E."),
+      q("Které slovo začíná na písmeno M?", "míč", ["pes", "auto", "ryba"], "hlásky", "Míč si bereš na hřiště."),
+      q("Co patří do pohádky?", "princezna", ["autobus", "počítač", "telefon"], "pohádky", "V pohádkách bývají králové a princezny."),
+      q("Které písmeno je souhláska?", "P", ["A", "E", "I"], "hlásky", "Souhlásky nejsou samohlásky."),
+      q("Které slovo je zdrobnělina?", "pejsek", ["pes", "kočka", "kůň"], "slovní zásoba", "Zdrobnělina zní mazlivě a je menší.")
+    ],
+    2: [
+      q("Které slovo je vyjmenované po B?", "být", ["bít", "bota", "bob"], "vyjmenovaná slova", "Vyjmenovaná slova po B: být, bydlit, obyvatel, byt..."),
+      q("Doplň i/y: M__ jsme kamarádi.", "y", ["i", "í", "ý"], "i/y", "Zájmeno my píšeme s tvrdým y."),
+      q("Které slovo je podstatné jméno?", "škola", ["běžet", "veselý", "rychle"], "slovní druhy", "Podstatná jména pojmenovávají osoby, zvířata a věci."),
+      q("Které slovo je sloveso?", "skáče", ["strom", "modrý", "pomalu"], "slovní druhy", "Slovesa vyjadřují činnost."),
+      q("Kolik slabik má slovo KOČIČKA?", "3", ["2", "4", "5"], "slabiky", "Ko-čič-ka."),
+      q("Které slovo má předponu?", "přijít", ["jít", "chodit", "běžet"], "stavba slova", "Předpona je část slova před kořenem."),
+      q("Které slovo je vyjmenované po L?", "lyže", ["les", "lev", "lampa"], "vyjmenovaná slova", "Vyjmenovaná slova po L: slyšet, mlýn, blýskat se, lyže..."),
+      q("Doplň i/y: Na jaře kvetou b__liny.", "y", ["i", "í", "ý"], "i/y", "Bylina patří mezi vyjmenovaná slova po B."),
+      q("Které slovo je přídavné jméno?", "veselý", ["skákat", "škola", "rychle"], "slovní druhy", "Přídavná jména popisují vlastnosti."),
+      q("Která věta je napsaná správně?", "Maminka vaří oběd.", ["maminka vaří oběd.", "Maminka vaří Oběd.", "Maminka Vaří oběd."], "pravopis", "Věta začíná velkým písmenem.")
+    ],
+    3: [
+      q("Doplň i/y: V__jmenovaná slova se učíme.", "y", ["i", "í", "ý"], "vyjmenovaná slova", "Slovo vyjmenovaná začíná na vy-."),
+      q("Doplň správný tvar: Děti __ na hřišti.", "si hrají", ["si hraje", "si hrajou", "si hrajeme"], "shoda", "Podmět děti je v množném čísle."),
+      q("Které slovo je příslovce?", "rychle", ["rychlý", "rychlost", "zrychlit"], "slovní druhy", "Příslovce odpovídají na otázku jak."),
+      q("Která věta obsahuje předložku?", "Jdu do školy.", ["Jdu rychle.", "Jdu a zpívám.", "Jdu, ale nevím."], "slovní druhy", "Předložka stojí před podstatným jménem."),
+      q("Jaký slovní druh je slovo ALE?", "spojka", ["předložka", "příslovce", "částice"], "slovní druhy", "Spojky spojují slova nebo věty."),
+      q("Které slovo je zdrobnělina?", "domeček", ["dům", "domov", "domácí"], "slovní zásoba", "Zdrobnělina vyjadřuje menší věc."),
+      q("Doplň správně: Na obloze zář__ slunce.", "í", ["ý", "e", "ou"], "pravopis", "Sloveso zářit má v 3. osobě čísla jednotného koncovku -í."),
+      q("Které slovo je mnohoznačné?", "kohoutek", ["stůl", "kniha", "tužka"], "slovní zásoba", "Kohoutek může být pták i vodovodní část."),
+      q("Co je to přirovnání?", "porovnání pomocí jako", ["opakování slov", "nadsázka", "zvířecí řeč"], "literatura", "Přirovnání často obsahuje slovo jako."),
+      q("Která věta je souvětí?", "Pršelo, a proto jsme zůstali doma.", ["Pršelo.", "Zůstali jsme doma.", "Doma bylo teplo."], "věty", "Souvětí má alespoň dvě věty.")
+    ],
+    4: [
+      q("Které slovo je napsané správně?", "výjimka", ["víjimka", "vyjímka", "vijímka"], "pravopis", "Slovo výjimka má předponu vý-."),
+      q("Urči slovní druh slova PŘESTOŽE.", "spojka", ["předložka", "příslovce", "částice"], "slovní druhy", "Přestože spojuje dvě věty."),
+      q("Která věta má správnou shodu?", "Chlapci přišli včas.", ["Chlapci přišel včas.", "Chlapci přišly včas.", "Chlapci přišlo včas."], "shoda", "Podmět chlapci je rodu mužského životného."),
+      q("Co je metafora?", "přenášení významu na základě podobnosti", ["přirovnání pomocí jako", "nadsázka", "opakování na začátku veršů"], "literatura", "Metafora přenáší význam bez slova jako."),
+      q("Které slovo je přejaté z cizího jazyka?", "telefon", ["stůl", "voda", "dům"], "slovní zásoba", "Telefon pochází z řečtiny."),
+      q("Doplň: Kdybych __ čas, přišel bych.", "měl", ["mám", "budu mít", "mít"], "slovesa", "Podmiňovací způsob používá minulý tvar slovesa."),
+      q("Která věta je v trpném rodě?", "Dům byl postaven v roce 1900.", ["Stavitel postavil dům.", "Dům stojí na kopci.", "Postavíme nový dům."], "slovesa", "V trpném rodě je děj vyjádřen opisem s být."),
+      q("Které slovo je přídavné jméno přivlastňovací?", "matčin", ["milý", "červený", "rychlý"], "slovní druhy", "Přivlastňovací přídavná jména ukazují, komu něco patří."),
+      q("Co je předpona?", "část slova před kořenem", ["část slova za kořenem", "koncová část slova", "část slova bez kořene"], "stavba slova", "Předpona mění význam slova."),
+      q("Která věta obsahuje vsuvku?", "Můj bratr, který je starší, studuje lékařství.", ["Můj bratr studuje lékařství.", "Bratr je starší.", "Studuje lékařství."], "věty", "Vsuvka je vložená část věty oddělená čárkami.")
+    ],
+    5: [
+      q("Které slovo je napsané správně?", "zpěv", ["spjev", "zpěf", "zpiev"], "pravopis", "Slovo zpěv píšeme se z na začátku."),
+      q("Co je oxymóron?", "spojení protikladných slov", ["opakování slov", "přirovnání", "nadsázka"], "literatura", "Oxymóron spojuje zdánlivě protikladné pojmy."),
+      q("Která věta je v podmiňovacím způsobu?", "Kdybych měl čas, přišel bych.", ["Přijdu zítra.", "Přišel jsem včas.", "Přijď zítra!"], "slovesa", "Podmiňovací způsob vyjadřuje podmínku."),
+      q("Urči větný člen: Ve větě „Rychle běžel.“ je slovo „rychle“...", "příslovečné určení způsobu", ["předmět", "přívlastek", "podmět"], "větné členy", "Příslovečné určení odpovídá na otázku jak."),
+      q("Které slovo je napsané správně?", "nepochybně", ["nepochibně", "nepochybňe", "nepochibňe"], "pravopis", "Slovo nepochybně obsahuje y po b."),
+      q("Co je personifikace?", "přisouzení lidských vlastností neživým věcem", ["přirovnání", "nadsázka", "opakování"], "literatura", "Personifikace oživuje věci."),
+      q("Která věta je souvětí podřadné?", "Nevěděl, kdy přijde.", ["Přišel a sedl si.", "Pršelo, ale šli jsme ven.", "Přišel, nebo ne?"], "věty", "V podřadném souvětí je jedna věta závislá."),
+      q("Který tvar je správný?", "s oběma kamarády", ["s obouma kamarády", "s oběmi kamarády", "s oběma kamarádama"], "skloňování", "Číslovka oba má tvar oběma ve 7. pádě."),
+      q("Které slovo je přejaté?", "fotbal", ["míč", "hřiště", "branka"], "slovní zásoba", "Fotbal pochází z angličtiny."),
+      q("Co znamená rčení „mít něco za lubem“?", "mít tajný plán", ["být nemocný", "něco hledat", "být naštvaný"], "frazeologie", "Rčení se používá obrazně.")
+    ],
+    6: [
+      q("Co je to elipsa?", "vynechání části výpovědi", ["nadsázka", "opakování", "přirovnání"], "literatura", "Elipsa záměrně vynechává slova."),
+      q("Která věta je v trpném rodě?", "Kniha byla napsána autorem.", ["Autor napsal knihu.", "Kniha leží na stole.", "Autor píše knihu."], "slovesa", "Trpný rod často používá být + příčestí."),
+      q("Urči styl: „Vážený pane, dovoluji si...“", "úřední styl", ["umělecký styl", "hovorový styl", "publicistický styl"], "stylistika", "Oslovení Vážený pane je typické pro úřední styk."),
+      q("Co je to hyperbola?", "nadsázka", ["přirovnání", "personifikace", "metafora"], "literatura", "Hyperbola zveličuje."),
+      q("Které slovo je napsané správně?", "konsensus", ["konsensuz", "konsenssus", "konsensys"], "pravopis", "Slovo konsensus se píše se s uprostřed."),
+      q("Která věta obsahuje přechodník?", "Přijda domů, uvařil čaj.", ["Přišel domů a uvařil čaj.", "Když přišel domů, uvařil čaj.", "Přijde domů a uvaří čaj."], "slovesa", "Přechodník vyjadřuje současný nebo předchozí děj."),
+      q("Co je to aluze?", "narážka na jiné dílo", ["opakování slov", "nadsázka", "přímá řeč"], "literatura", "Aluze odkazuje na známý text nebo událost."),
+      q("Který tvar je spisovný?", "bychom", ["by jsme", "bysme", "bychme"], "pravopis", "Podmiňovací způsob 1. osoby množného čísla je bychom."),
+      q("Urči slovesný rod: „Bylo rozhodnuto.“", "trpný", ["činný", "podmiňovací", "rozkazovací"], "slovesa", "Děj není vyjádřen aktivním podmětem."),
+      q("Které souvětí je podřadné?", "Ačkoli pršelo, vyšli jsme.", ["Pršelo a vyšli jsme.", "Pršelo, nebo jsme zůstali.", "Pršelo, ale vyšli jsme."], "věty", "Spojka ačkoli uvozuje vedlejší větu.")
+    ]
+  };
+
+  const ENGLISH_BANK = {
+    1: [
+      q("What color is the sky?", "blue", ["red", "green", "yellow"], "colors", "The sky is usually blue."),
+      q("Which animal says 'meow'?", "cat", ["dog", "cow", "duck"], "animals", "A cat says meow."),
+      q("How do you say 'ahoj' in English?", "hello", ["goodbye", "please", "thank you"], "greetings", "Hello is a common greeting."),
+      q("What number comes after three?", "four", ["two", "five", "six"], "numbers", "Count: one, two, three, four."),
+      q("Which one is a fruit?", "apple", ["car", "book", "chair"], "vocabulary", "An apple is a fruit."),
+      q("How do you say 'děkuji'?", "thank you", ["hello", "sorry", "please"], "greetings", "Thank you means děkuji."),
+      q("What is the opposite of 'big'?", "small", ["tall", "fast", "new"], "opposites", "Big and small are opposites."),
+      q("Which word means 'máma'?", "mother", ["father", "sister", "brother"], "family", "Mother is máma."),
+      q("What color is a banana?", "yellow", ["blue", "purple", "black"], "colors", "A banana is yellow."),
+      q("Which is a day of the week?", "Monday", ["January", "summer", "morning"], "time", "Monday is a day of the week.")
+    ],
+    2: [
+      q("What is the plural of 'cat'?", "cats", ["cat", "cates", "catz"], "plurals", "Add -s to make most plurals."),
+      q("Choose the correct sentence.", "She is my friend.", ["She are my friend.", "She am my friend.", "She be my friend."], "grammar", "She goes with is."),
+      q("What is the opposite of 'hot'?", "cold", ["warm", "sunny", "dry"], "opposites", "Hot and cold are opposites."),
+      q("Which word is a verb?", "run", ["table", "happy", "blue"], "word classes", "A verb describes an action."),
+      q("How do you say 'kniha'?", "book", ["look", "cook", "hook"], "vocabulary", "Book means kniha."),
+      q("Choose the correct question.", "Do you like apples?", ["Does you like apples?", "Are you like apples?", "Is you like apples?"], "questions", "Use do with you."),
+      q("What is the plural of 'child'?", "children", ["childs", "childes", "childrens"], "plurals", "Child has an irregular plural."),
+      q("Which word means 'učitel'?", "teacher", ["student", "doctor", "driver"], "vocabulary", "A teacher teaches."),
+      q("Choose the correct form: I ___ a student.", "am", ["is", "are", "be"], "grammar", "I goes with am."),
+      q("What is the opposite of 'fast'?", "slow", ["quick", "late", "early"], "opposites", "Fast and slow are opposites.")
+    ],
+    3: [
+      q("Choose the correct sentence in present simple.", "He plays football every day.", ["He play football every day.", "He is play football every day.", "He playing football every day."], "present simple", "He/she/it takes -s in present simple."),
+      q("What is the past tense of 'go'?", "went", ["goed", "gone", "going"], "past simple", "Go is irregular: go - went - gone."),
+      q("Choose the correct preposition: The book is ___ the table.", "on", ["at", "in", "to"], "prepositions", "On means na povrchu."),
+      q("What does 'breakfast' mean?", "snídaně", ["oběd", "večeře", "svačina"], "vocabulary", "Breakfast is the first meal of the day."),
+      q("Choose the correct plural: one mouse, two ___.", "mice", ["mouses", "mouse", "mices"], "plurals", "Mouse has the irregular plural mice."),
+      q("Which word is an adjective?", "beautiful", ["run", "quickly", "table"], "word classes", "An adjective describes a noun."),
+      q("Choose the correct question: ___ do you live?", "Where", ["What", "Who", "When"], "questions", "Where asks about a place."),
+      q("What is the opposite of 'always'?", "never", ["sometimes", "often", "usually"], "opposites", "Always and never are opposites."),
+      q("Choose the correct sentence.", "There are two apples on the table.", ["There is two apples on the table.", "There are two apple on the table.", "There be two apples on the table."], "grammar", "Use are with a plural noun."),
+      q("What does 'library' mean?", "knihovna", ["knihkupectví", "škola", "obchod"], "vocabulary", "A library is a place with books.")
+    ],
+    4: [
+      q("Choose the correct past simple sentence.", "She visited her grandmother yesterday.", ["She visit her grandmother yesterday.", "She was visit her grandmother yesterday.", "She visiting her grandmother yesterday."], "past simple", "Regular verbs take -ed in past simple."),
+      q("What is the comparative form of 'good'?", "better", ["gooder", "best", "more good"], "comparatives", "Good is irregular: good - better - best."),
+      q("Choose the correct sentence with 'going to'.", "We are going to travel next week.", ["We going to travel next week.", "We are go to travel next week.", "We is going to travel next week."], "future", "Use am/is/are + going to + verb."),
+      q("What does 'borrow' mean?", "půjčit si", ["koupit", "prodat", "ukrást"], "vocabulary", "Borrow means to take something temporarily."),
+      q("Choose the correct preposition: I'm interested ___ history.", "in", ["on", "at", "for"], "prepositions", "Interested in is a fixed phrase."),
+      q("What is the past participle of 'write'?", "written", ["wrote", "writed", "writing"], "irregular verbs", "Write - wrote - written."),
+      q("Choose the correct question tag: You like tea, ___?", "don't you", ["do you", "aren't you", "didn't you"], "question tags", "The main verb is like in present simple."),
+      q("Which word means 'životopis'?", "CV", ["cover letter", "diary", "invoice"], "vocabulary", "CV is short for curriculum vitae."),
+      q("Choose the correct sentence.", "If it rains, we will stay at home.", ["If it will rain, we stay at home.", "If it rains, we would stay at home.", "If it rain, we will stay at home."], "conditionals", "Use present simple after if in the first conditional."),
+      q("What is the opposite of 'expensive'?", "cheap", ["costly", "rich", "valuable"], "opposites", "Expensive and cheap are opposites.")
+    ],
+    5: [
+      q("Choose the correct present perfect sentence.", "I have never been to London.", ["I never was to London.", "I have never went to London.", "I am never been to London."], "present perfect", "Use have/has + past participle."),
+      q("What is the passive form of 'They built the house'?", "The house was built.", ["The house is build.", "The house built.", "The house has build."], "passive", "Use was/were + past participle."),
+      q("Choose the correct conditional sentence.", "If I had more time, I would learn Spanish.", ["If I have more time, I would learn Spanish.", "If I had more time, I will learn Spanish.", "If I would have more time, I learned Spanish."], "conditionals", "The second conditional uses past simple + would."),
+      q("What does 'although' mean?", "ačkoli", ["protože", "takže", "pokud"], "vocabulary", "Although introduces a contrast."),
+      q("Choose the correct form: She suggested ___ a break.", "taking", ["to take", "take", "took"], "gerunds", "Suggest is followed by -ing."),
+      q("Choose the correct reported speech: 'I am tired,' he said.", "He said that he was tired.", ["He said that he is tired.", "He said that I was tired.", "He says that he was tired."], "reported speech", "Move the tense back in reported speech."),
+      q("Which word is a phrasal verb?", "give up", ["give", "up", "gift"], "phrasal verbs", "A phrasal verb is a verb plus a particle."),
+      q("Choose the correct sentence.", "Neither of the answers is correct.", ["Neither of the answers are correct.", "Neither of the answer is correct.", "Neither answers is correct."], "grammar", "Neither of + plural noun takes a singular verb."),
+      q("What does 'reluctant' mean?", "neochotný", ["nadšený", "zvědavý", "líný"], "vocabulary", "Reluctant means not willing."),
+      q("Choose the correct preposition: She is good ___ maths.", "at", ["in", "on", "for"], "prepositions", "Good at is a fixed phrase.")
+    ],
+    6: [
+      q("Choose the correct sentence.", "Had I known, I would have come.", ["If I would have known, I would have come.", "Had I knew, I would have come.", "If I had known, I would come."], "conditionals", "This is the third conditional with inversion."),
+      q("What does 'notwithstanding' mean?", "navzdory", ["protože", "zatímco", "podle"], "vocabulary", "Notwithstanding means in spite of."),
+      q("Choose the correct passive sentence.", "The report has been completed.", ["The report have been completed.", "The report has completed.", "The report is been completed."], "passive", "Use has been + past participle."),
+      q("Which word is a collocation with 'make'?", "make a decision", ["make a photo", "make a shower", "make a walk"], "collocations", "We say make a decision."),
+      q("Choose the correct form: I wish I ___ more time.", "had", ["have", "will have", "would have"], "wish", "After wish, use past simple for the present."),
+      q("What does 'to put up with' mean?", "snášet", ["odložit", "postavit", "nabídnout"], "phrasal verbs", "Put up with means tolerate."),
+      q("Choose the correct sentence.", "She denied having taken the money.", ["She denied to take the money.", "She denied have taken the money.", "She denied took the money."], "gerunds", "Deny is followed by -ing."),
+      q("What is the synonym of 'crucial'?", "essential", ["optional", "minor", "unusual"], "vocabulary", "Crucial means very important."),
+      q("Choose the correct sentence.", "Hardly had he arrived when the phone rang.", ["Hardly he had arrived when the phone rang.", "Hardly had he arrived than the phone rang.", "Hardly he arrived when the phone rang."], "inversion", "Hardly at the beginning requires inversion."),
+      q("What does 'ambiguous' mean?", "nejednoznačný", ["zřejmý", "přesný", "jednoduchý"], "vocabulary", "Ambiguous means unclear.")
+    ]
+  };
+
+  function fromBank(bank, level, subjectId) {
+    const question = pick(bank || CZECH_BANK[3]);
+    const count = Math.max(3, Number(level.choices) || 4);
+    const choices = [question.answer];
+    const seen = new Set(choices);
+    for (const wrong of shuffle(question.wrong || [])) {
+      if (choices.length >= count) break;
+      if (wrong === question.answer || seen.has(wrong)) continue;
+      seen.add(wrong);
+      choices.push(wrong);
+    }
+    return {
+      text: question.text,
+      answer: question.answer,
+      value: question.answer,
+      choices: shuffle(choices),
+      hint: question.hint || "Přečti si otázku pozorně a vyluč nesprávné možnosti.",
+      category: question.category || (subjectId === "anglictina" ? "angličtina" : "čeština"),
+      tier: level.mathTier,
+      subject: subjectId
+    };
+  }
+
   function makeChoices(answer, count, extras, step, min, max) {
     const answerText = fmt(answer);
     const options = [answerText];
@@ -73,7 +249,8 @@
       choices,
       hint: raw.hint || "Zkus si příklad rozložit na menší kroky.",
       category: raw.category || "počítání",
-      tier: level.mathTier
+      tier: level.mathTier,
+      subject: "matematika"
     };
   }
 
@@ -447,7 +624,18 @@
 
   const generators = { 1: tier1, 2: tier2, 3: tier3, 4: tier4, 5: tier5, 6: tier6 };
 
-  function create(level) {
+  function create(level, subject) {
+    const subjectId = typeof subject === "string"
+      ? subject
+      : subject && subject.id
+        ? subject.id
+        : "matematika";
+    if (subjectId === "cestina") {
+      return fromBank(CZECH_BANK[level.mathTier] || CZECH_BANK[3], level, subjectId);
+    }
+    if (subjectId === "anglictina") {
+      return fromBank(ENGLISH_BANK[level.mathTier] || ENGLISH_BANK[3], level, subjectId);
+    }
     const gen = generators[level.mathTier] || tier3;
     let raw;
     try {

@@ -4,6 +4,50 @@
 (function () {
   "use strict";
 
+  const SUBJECTS = [
+    {
+      id: "cestina",
+      name: "Čeština",
+      icon: "📖",
+      color: "#f472b6",
+      glow: "rgba(244,114,182,.2)",
+      blurb: "Pravopis, slovní zásoba a jazykové hádanky.",
+      topics: {
+        1: ["Písmena a slabiky", "První čtení", "Rýmy a pohádky"],
+        2: ["Vyjmenovaná slova", "Psaní i/y", "Slovní druhy"],
+        3: ["Shoda podmětu s přísudkem", "Stavba věty", "Slovní zásoba"],
+        4: ["Předpony a předložky", "Větné členy", "Literární pojmy"],
+        5: ["Koncovky a skloňování", "Vedlejší věty", "Frazeologie"],
+        6: ["Pravopisná cvičení", "Větné rozbory", "Stylistika a literatura"]
+      }
+    },
+    {
+      id: "matematika",
+      name: "Matematika",
+      icon: "🧮",
+      color: "#38e8ff",
+      glow: "rgba(56,232,255,.2)",
+      blurb: "Počítání, rovnice a logické úlohy.",
+      topics: null
+    },
+    {
+      id: "anglictina",
+      name: "Angličtina",
+      icon: "🔤",
+      color: "#a78bfa",
+      glow: "rgba(167,139,250,.2)",
+      blurb: "Slovíčka, gramatika a překlad.",
+      topics: {
+        1: ["Barvy a čísla", "Zvířata", "Pozdravy"],
+        2: ["Rodina a škola", "Množné číslo", "Přítomný čas"],
+        3: ["Present simple", "Předložky", "Každodenní fráze"],
+        4: ["Minulý čas", "Stupňování", "Slovní zásoba"],
+        5: ["Present perfect", "Podmínkové věty", "Čtení"],
+        6: ["Phrasal verbs", "Pasiv", "Pokročilá gramatika"]
+      }
+    }
+  ];
+
   const LEVELS = [
     {
       id: "trida1",
@@ -16,7 +60,6 @@
       mathTier: 1,
       topics: ["Sčítání do 10", "Odčítání do 10", "Doplňování čísel"],
       choices: 3,
-      mathTime: 34,
       chests: 4,
       enemies: 4,
       enemySpeed: 0.78,
@@ -24,7 +67,7 @@
       enemyMix: ["slime", "slime", "slime", "bat"],
       maxHp: 120,
       difficulty: 1,
-      blurb: "Malá čísla, pomalí nepřátelé a dost času na každý příklad."
+      blurb: "Malá čísla, pomalí nepřátelé a klid na každý úkol."
     },
     {
       id: "trida2",
@@ -37,7 +80,6 @@
       mathTier: 2,
       topics: ["Sčítání a odčítání do 100", "Malá násobilka", "Dělení beze zbytku"],
       choices: 4,
-      mathTime: 30,
       chests: 4,
       enemies: 5,
       enemySpeed: 0.86,
@@ -58,7 +100,6 @@
       mathTier: 3,
       topics: ["Násobilka do 10", "Dělení", "Větší čísla", "Zlomky z celku"],
       choices: 4,
-      mathTime: 27,
       chests: 5,
       enemies: 5,
       enemySpeed: 0.95,
@@ -79,7 +120,6 @@
       mathTier: 4,
       topics: ["Desetinná čísla", "Zlomky", "Procenta", "Závorky"],
       choices: 4,
-      mathTime: 25,
       chests: 5,
       enemies: 6,
       enemySpeed: 1.02,
@@ -100,7 +140,6 @@
       mathTier: 5,
       topics: ["Záporná čísla", "Mocniny a odmocniny", "Rovnice", "Procenta"],
       choices: 4,
-      mathTime: 23,
       chests: 6,
       enemies: 7,
       enemySpeed: 1.1,
@@ -121,7 +160,6 @@
       mathTier: 6,
       topics: ["Lineární rovnice", "Kvadratické rovnice", "Soustavy rovnic", "Mocniny a procenta"],
       choices: 4,
-      mathTime: 21,
       chests: 6,
       enemies: 8,
       enemySpeed: 1.18,
@@ -129,7 +167,7 @@
       enemyMix: ["shade", "shade", "ghost", "ghost", "bat", "bat", "bat", "ghost"],
       maxHp: 100,
       difficulty: 6,
-      blurb: "Nejtěžší příklady, nejrychlejší nepřátelé a minimum času."
+      blurb: "Nejtěžší příklady a nejrychlejší nepřátelé. Času máš ale dost."
     }
   ];
 
@@ -197,6 +235,7 @@
   const SAVE_KEY = "ciselneBludiste.v1";
 
   window.GameData = {
+    SUBJECTS,
     LEVELS,
     ENEMY_TYPES,
     STARTING_WEAPON,
